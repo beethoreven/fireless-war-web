@@ -1,0 +1,272 @@
+:root {
+  --bg-wine: #4a1029;
+  --panel-bg: rgba(255, 255, 255, 0.06);
+  --panel-border: rgba(255, 255, 255, 0.14);
+  --text-primary: #f3e8dc;
+  --text-muted: rgba(243, 232, 220, 0.65);
+  --accent-gold: #d4af37;
+  --accent-gold-hover: #e5c860;
+  --error-red: #ff8a80;
+  --success-green: #9be89b;
+  --font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'PingFang TC',
+    'Microsoft JhengHei', 'Heiti TC', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--bg-wine);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 頂部列:右上角預留帳號登入/登出區塊 */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+.account-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: default;
+  user-select: none;
+}
+
+.account-slot__icon {
+  display: inline-flex;
+}
+
+/* 主內容區 */
+.page1 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+input {
+  font-family: inherit;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input:focus {
+  border-color: var(--accent-gold);
+}
+
+/* 讓瀏覽器原生 datetime-local 圖示在深色背景上看得見 */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}
+
+.manual-datetime__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 3px;
+}
+
+.dt-input {
+  text-align: center;
+  padding: 10px 2px;
+  -moz-appearance: textfield;
+  min-width: 0;
+}
+
+.dt-input::-webkit-outer-spin-button,
+.dt-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.dt-input--year {
+  width: 58px;
+}
+
+.dt-input--short {
+  width: 36px;
+}
+
+.dt-unit {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  font-family: inherit;
+  background: var(--accent-gold);
+  color: #2a0a17;
+  border: none;
+  border-radius: 8px;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-gold-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* 底部切換區:預留給未來的回合切換捲軸,不特別標出邊界 */
+.switch-zone {
+  min-height: 64px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: rgba(20, 6, 12, 0.95);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  white-space: nowrap;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.toast--error {
+  border-color: var(--error-red);
+  color: var(--error-red);
+}
+
+.toast.toast--success {
+  border-color: var(--success-green);
+  color: var(--success-green);
+}
+
+/* Dialog */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  padding: 20px;
+}
+
+.dialog-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.dialog-box {
+  background: #3a0c20;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 26px 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+}
+
+.dialog-message {
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-secondary {
+  font-family: inherit;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--accent-gold);
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(212, 175, 55, 0.15);
+}

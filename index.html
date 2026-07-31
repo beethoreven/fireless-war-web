@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>願浮沉2:無火戰爭</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top-bar">
+  <div class="account-slot" title="帳號登入功能開發中">
+    <span class="account-slot__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+      </svg>
+    </span>
+    <span class="account-slot__label">帳號</span>
+  </div>
+</header>
+
+<main class="page1">
+  <div class="panel">
+    <h1 class="title">場次讀取</h1>
+
+    <section class="field-group">
+      <label class="field-label" for="datetime-picker">選擇日期時間</label>
+      <input type="datetime-local" id="datetime-picker" class="datetime-picker">
+    </section>
+
+    <section class="field-group manual-datetime">
+      <span class="field-label">日期時間</span>
+      <div class="manual-datetime__row">
+        <input type="number" id="field-year" class="dt-input dt-input--year" placeholder="YYYY" min="1970" max="9999" inputmode="numeric">
+        <span class="dt-unit">年</span>
+        <input type="number" id="field-month" class="dt-input dt-input--short" placeholder="MM" min="1" max="12" inputmode="numeric">
+        <span class="dt-unit">月</span>
+        <input type="number" id="field-day" class="dt-input dt-input--short" placeholder="DD" min="1" max="31" inputmode="numeric">
+        <span class="dt-unit">日</span>
+        <input type="number" id="field-hour" class="dt-input dt-input--short" placeholder="hh" min="0" max="23" inputmode="numeric">
+        <span class="dt-unit">時</span>
+        <input type="number" id="field-minute" class="dt-input dt-input--short" placeholder="mm" min="0" max="59" inputmode="numeric">
+        <span class="dt-unit">分</span>
+      </div>
+    </section>
+
+    <section class="field-group">
+      <label class="field-label" for="field-email">Email</label>
+      <input type="email" id="field-email" class="email-input" placeholder="you@example.com" autocomplete="email">
+    </section>
+
+    <button id="btn-read-record" class="btn-primary">讀取記錄表</button>
+  </div>
+</main>
+
+<footer class="switch-zone" aria-hidden="true"></footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="dialog-overlay" class="dialog-overlay">
+  <div class="dialog-box">
+    <p id="dialog-message" class="dialog-message"></p>
+    <div class="dialog-actions">
+      <button id="dialog-yes" class="btn-secondary">是</button>
+      <button id="dialog-no" class="btn-secondary">否</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
