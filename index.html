@@ -28,8 +28,14 @@
     <h1 class="title">場次讀取</h1>
 
     <section class="field-group">
-      <label class="field-label" for="datetime-picker">選擇日期時間</label>
-      <input type="datetime-local" id="datetime-picker" class="datetime-picker">
+      <label class="field-label" for="date-picker">選擇日期時間</label>
+      <div class="picker-row">
+        <input type="date" id="date-picker" class="date-picker">
+        <select id="hour-picker" class="time-select" aria-label="時"></select>
+        <span class="dt-unit">時</span>
+        <select id="minute-picker" class="time-select" aria-label="分"></select>
+        <span class="dt-unit">分</span>
+      </div>
     </section>
 
     <section class="field-group manual-datetime">

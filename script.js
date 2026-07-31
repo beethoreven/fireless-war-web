@@ -1,6 +1,8 @@
 const API_BASE = "https://fireless-war-backend.onrender.com";
 
-const datetimePicker = document.getElementById("datetime-picker");
+const datePicker = document.getElementById("date-picker");
+const hourPicker = document.getElementById("hour-picker");
+const minutePicker = document.getElementById("minute-picker");
 const fieldYear = document.getElementById("field-year");
 const fieldMonth = document.getElementById("field-month");
 const fieldDay = document.getElementById("field-day");
@@ -39,17 +41,39 @@ function setLoading(isLoading) {
   btnReadRecord.textContent = isLoading ? "讀取中…" : "讀取記錄表";
 }
 
-// 選日曆挑好時間後,把數字帶進下方手動欄位;實際送出仍然只看手動欄位的值
-datetimePicker.addEventListener("change", () => {
-  if (!datetimePicker.value) return;
-  const [datePart, timePart] = datetimePicker.value.split("T");
-  const [y, m, d] = datePart.split("-");
-  const [hh, mm] = timePart.split(":");
+function populateTimeSelect(selectEl, max) {
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "--";
+  selectEl.appendChild(blank);
+  for (let i = 0; i <= max; i++) {
+    const option = document.createElement("option");
+    option.value = String(i);
+    option.textContent = pad2(i);
+    selectEl.appendChild(option);
+  }
+}
+
+populateTimeSelect(hourPicker, 23);
+populateTimeSelect(minutePicker, 59);
+
+// 挑好日期/時/分後,把數字帶進下方手動欄位;實際送出仍然只看手動欄位的值
+datePicker.addEventListener("change", () => {
+  if (!datePicker.value) return;
+  const [y, m, d] = datePicker.value.split("-");
   fieldYear.value = Number(y);
   fieldMonth.value = Number(m);
   fieldDay.value = Number(d);
-  fieldHour.value = Number(hh);
-  fieldMinute.value = Number(mm);
+});
+
+hourPicker.addEventListener("change", () => {
+  if (hourPicker.value === "") return;
+  fieldHour.value = Number(hourPicker.value);
+});
+
+minutePicker.addEventListener("change", () => {
+  if (minutePicker.value === "") return;
+  fieldMinute.value = Number(minutePicker.value);
 });
 
 function daysInMonth(year, month) {
