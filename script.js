@@ -365,11 +365,32 @@ scrollerEl.addEventListener("scroll", () => {
 scrollerPrevBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex - 1));
 scrollerNextBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex + 1));
 
-function renderPanel(slug, entry, type, oniwaraOut) {
+function getIconPath(slug, mikeOut, kounoSingle) {
+  switch (slug) {
+    case "oniwara":
+      return "logo_icon/oniwara-logo.png";
+    case "mike":
+      return mikeOut ? "logo_icon/isao-logo.png" : "logo_icon/hyena-logo.png";
+    case "kinugawa":
+      return "logo_icon/yamoguchi-logo.png";
+    case "kouno":
+      return kounoSingle ? "logo_icon/kouno-logo.png" : "logo_icon/huntreak-logo.png";
+    case "ph003":
+      return "logo_icon/huntreak-logo.png";
+    default:
+      return null;
+  }
+}
+
+function renderPanel(slug, entry, type, oniwaraOut, mikeOut, kounoSingle) {
   const panel = document.querySelector(`.chart-panel[data-slug="${slug}"]`);
   if (!panel || !entry) return;
 
   panel.querySelector(".chart-panel__org-name").textContent = entry.organization || "-";
+
+  const iconPath = getIconPath(slug, mikeOut, kounoSingle);
+  const iconEl = panel.querySelector(".chart-panel__icon");
+  iconEl.style.backgroundImage = iconPath ? `url('${iconPath}')` : "";
 
   const useOniwaraLabels = slug === "oniwara" && oniwaraOut;
   const labels = useOniwaraLabels ? BUSINESS_LABELS_ONIWARA_OUT : BUSINESS_LABELS_DEFAULT;
@@ -465,7 +486,7 @@ function evaluateWarning(legal, illegal, brokenTarget) {
 
 function renderRoundData(data) {
   PANEL_SLUGS.forEach((slug) => {
-    renderPanel(slug, data.business_level[slug], data.type, data.oniwara_out);
+    renderPanel(slug, data.business_level[slug], data.type, data.oniwara_out, data.mike_out, data.kouno_single);
   });
 
   legalBusinessValueEl.textContent = data.legal_business;
