@@ -58,7 +58,7 @@ body {
   border: 1px solid var(--panel-border);
   border-radius: 999px;
   color: var(--text-muted);
-  font-size: 1.7rem;
+  font-size: 0.85rem;
   cursor: default;
   user-select: none;
 }
@@ -90,7 +90,7 @@ body {
 
 .title {
   margin: 0;
-  font-size: 2.8rem;
+  font-size: 1.4rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.05em;
@@ -103,7 +103,7 @@ body {
 }
 
 .field-label {
-  font-size: 1.7rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
 }
 
@@ -115,7 +115,7 @@ select {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: 2rem;
+  font-size: 1rem;
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -159,7 +159,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding: 10px 2px;
   -moz-appearance: textfield;
   min-width: 0;
-  font-size: 1.4rem;
 }
 
 .dt-input::-webkit-outer-spin-button,
@@ -169,16 +168,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .dt-input--year {
-  width: 92px;
+  width: 58px;
 }
 
 .dt-input--short {
-  width: 68px;
+  width: 36px;
 }
 
 .dt-unit {
   color: var(--text-muted);
-  font-size: 1.6rem;
+  font-size: 0.8rem;
   margin-right: 2px;
   flex-shrink: 0;
 }
@@ -190,7 +189,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: none;
   border-radius: 8px;
   padding: 13px;
-  font-size: 2rem;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease, opacity 0.15s ease;
@@ -245,8 +244,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .chart-panel__icon {
-  width: 1em;
-  height: 1em;
+  width: 42px;
+  height: 42px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid var(--panel-border);
@@ -290,7 +289,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .chart-panel__number-value {
-  font-size: 1.76rem;
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
@@ -307,13 +306,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   min-height: 0;
 }
 
-.common-data-panel__title {
-  margin: 0 0 4px;
-  font-size: 1.7rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
 .common-data-panel__row {
   display: flex;
   justify-content: space-between;
@@ -322,7 +314,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .common-data-panel__label {
   font-size: 1.64rem;
-  color: var(--text-muted);
+  color: #fff;
 }
 
 .common-data-panel__value {
@@ -397,18 +389,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .switch-zone__current-label {
-  font-size: 1.7rem;
-  color: var(--text-muted);
+  font-size: 3rem;
+  color: #fff;
   min-width: 84px;
 }
 
 .switch-zone__wheel-wrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
+  gap: 12px;
   flex: 1;
   min-width: 0;
+  justify-content: center;
 }
 
 .switch-zone__wheel-arrow {
@@ -416,8 +409,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: none;
   color: var(--text-muted);
   border-radius: 6px;
-  width: 40px;
-  height: 18px;
+  width: 18px;
+  height: 40px;
   font-size: 0.9rem;
   cursor: pointer;
   flex-shrink: 0;
@@ -432,19 +425,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .switch-zone__wheel-window {
   position: relative;
-  width: 220px;
-  height: 120px;
+  width: 420px;
+  height: 50px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .switch-zone__wheel {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-snap-type: y mandatory;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
   scrollbar-width: none;
-  padding: 40px 0;
+  padding: 0 140px;
+  display: flex;
 }
 
 .switch-zone__wheel::-webkit-scrollbar {
@@ -452,8 +446,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .switch-zone__option {
-  height: 40px;
-  width: 100%;
+  width: 140px;
+  height: 50px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -478,13 +473,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .switch-zone__wheel-highlight {
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 40px;
-  transform: translateY(-50%);
-  border-top: 1px solid var(--panel-border);
-  border-bottom: 1px solid var(--panel-border);
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 140px;
+  transform: translateX(-50%);
+  border-left: 1px solid var(--panel-border);
+  border-right: 1px solid var(--panel-border);
   pointer-events: none;
 }
 

@@ -319,7 +319,7 @@ function fadeIn(el) {
   setTimeout(() => el.classList.remove("fade-in"), 400);
 }
 
-const WHEEL_ROW_HEIGHT = 40;
+const WHEEL_ITEM_WIDTH = 140;
 
 function buildScroller() {
   scrollerEl.innerHTML = "";
@@ -344,7 +344,7 @@ function updateScrollerSelectedClass() {
 function setScrollerIndex(idx) {
   scrollerIndex = Math.max(0, Math.min(ROUND_OPTIONS.length - 1, idx));
   updateScrollerSelectedClass();
-  scrollerEl.scrollTo({ top: scrollerIndex * WHEEL_ROW_HEIGHT, behavior: "smooth" });
+  scrollerEl.scrollTo({ left: scrollerIndex * WHEEL_ITEM_WIDTH, behavior: "smooth" });
 }
 
 // 使用者直接滑/捲動滾輪 => 停下來後,同步目前捲到哪一格,不要再觸發程式化捲動
@@ -353,7 +353,7 @@ let wheelScrollSettleTimer = null;
 scrollerEl.addEventListener("scroll", () => {
   clearTimeout(wheelScrollSettleTimer);
   wheelScrollSettleTimer = setTimeout(() => {
-    const nearestIdx = Math.round(scrollerEl.scrollTop / WHEEL_ROW_HEIGHT);
+    const nearestIdx = Math.round(scrollerEl.scrollLeft / WHEEL_ITEM_WIDTH);
     scrollerIndex = Math.max(0, Math.min(ROUND_OPTIONS.length - 1, nearestIdx));
     updateScrollerSelectedClass();
   }, 120);
