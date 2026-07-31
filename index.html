@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -64,7 +65,101 @@
   </div>
 </main>
 
-<footer class="switch-zone" aria-hidden="true"></footer>
+<main class="page2" id="page2" hidden>
+  <div class="chart-grid">
+    <section class="chart-panel" data-slug="oniwara" style="grid-area: oniwara;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="chart-panel" data-slug="mike" style="grid-area: mike;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="common-data-panel" style="grid-area: common;">
+      <h2 class="common-data-panel__title">共同數據</h2>
+      <div class="common-data-panel__row">
+        <span class="common-data-panel__label">合法事業</span>
+        <span class="common-data-panel__value" id="legal-business-value">-</span>
+      </div>
+      <div class="common-data-panel__row">
+        <span class="common-data-panel__label">非法事業</span>
+        <span class="common-data-panel__value" id="illegal-business-value">-</span>
+      </div>
+      <div class="warning-banner" id="warning-banner" hidden></div>
+    </section>
+
+    <section class="chart-panel" data-slug="kinugawa" style="grid-area: kinugawa;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="chart-panel" data-slug="kouno" style="grid-area: kouno;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="chart-panel" data-slug="ph003" style="grid-area: ph003;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="loading-overlay" id="loading-overlay" hidden>
+  <div class="loading-spinner" aria-hidden="true"></div>
+</div>
+
+<footer class="switch-zone" id="switch-zone" hidden>
+  <span class="switch-zone__current-label" id="round-label-display"></span>
+  <div class="switch-zone__scroller-wrap">
+    <button class="switch-zone__arrow" id="scroller-prev" aria-label="上一個">&#8249;</button>
+    <div class="switch-zone__scroller" id="scroller"></div>
+    <button class="switch-zone__arrow" id="scroller-next" aria-label="下一個">&#8250;</button>
+  </div>
+  <button class="switch-zone__read-btn" id="btn-round-read">讀取</button>
+</footer>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

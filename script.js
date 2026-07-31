@@ -157,7 +157,9 @@ async function fetchRecord(dt, datetimeParam, email) {
     );
 
     if (res.status === 200) {
-      showToast("紀錄讀取成功", "success");
+      const data = await res.json();
+      lastUsedEmail = email;
+      await enterPage2(data.spreadsheet_id);
     } else if (res.status === 404) {
       showNotFoundDialog(dt, datetimeParam, email);
     } else if (res.status === 401) {
@@ -210,3 +212,299 @@ btnReadRecord.addEventListener("click", () => {
   const datetimeParam = toDatetimeParam(dtResult.value);
   fetchRecord(dtResult.value, datetimeParam, emailResult.value);
 });
+
+// ===== 頁面二 =====
+
+const ROUND_OPTIONS = [
+  { label: "第一天財報", day: "1st", type: "Morning" },
+  { label: "第一天預期", day: "1st", type: "Report" },
+  { label: "第二天財報", day: "2nd", type: "Morning" },
+  { label: "第二天預期", day: "2nd", type: "Report" },
+  { label: "第三天財報", day: "3rd", type: "Morning" },
+  { label: "第三天預期", day: "3rd", type: "Report" },
+  { label: "第四天財報", day: "4th", type: "Morning" },
+  { label: "第四天預期", day: "4th", type: "Report" },
+  { label: "第五天財報", day: "5th", type: "Morning" },
+  { label: "第五天預期", day: "5th", type: "Report" },
+  { label: "第六天財報", day: "6th", type: "Morning" },
+  { label: "第六天預期", day: "6th", type: "Report" },
+  { label: "第七天財報", day: "7th", type: "Morning" },
+  { label: "第七天預期", day: "7th", type: "Report" },
+  { label: "最終結算", day: "Final", type: "Report" },
+];
+
+const BUSINESS_ORDER = ["general_business", "finance", "sex", "drug", "arms"];
+
+const BUSINESS_LABELS_DEFAULT = {
+  general_business: "正當事業",
+  finance: "闇金",
+  sex: "色情",
+  drug: "毒品",
+  arms: "軍火",
+};
+
+const BUSINESS_LABELS_ONIWARA_OUT = {
+  general_business: "正當事業",
+  finance: "金融",
+  sex: "餐酒",
+  drug: "藥妝",
+  arms: "軍火",
+};
+
+const BUSINESS_COLORS_DEFAULT = {
+  general_business: "#ffffff",
+  finance: "#f5d442",
+  sex: "#9b59b6",
+  drug: "#2b2b2b",
+  arms: "#2ecc71",
+};
+
+const BUSINESS_COLORS_ONIWARA_OUT = {
+  general_business: "#ffffff",
+  finance: "#ffffff",
+  sex: "#ffffff",
+  drug: "#ffffff",
+  arms: "#2ecc71",
+};
+
+const PANEL_SLUGS = ["oniwara", "mike", "kinugawa", "kouno", "ph003"];
+
+const page1El = document.querySelector(".page1");
+const page2El = document.getElementById("page2");
+const chartGridEl = document.querySelector(".chart-grid");
+const loadingOverlayEl = document.getElementById("loading-overlay");
+const switchZoneEl = document.getElementById("switch-zone");
+const roundLabelDisplayEl = document.getElementById("round-label-display");
+const scrollerEl = document.getElementById("scroller");
+const scrollerPrevBtn = document.getElementById("scroller-prev");
+const scrollerNextBtn = document.getElementById("scroller-next");
+const btnRoundRead = document.getElementById("btn-round-read");
+const legalBusinessValueEl = document.getElementById("legal-business-value");
+const illegalBusinessValueEl = document.getElementById("illegal-business-value");
+const warningBannerEl = document.getElementById("warning-banner");
+
+let lastUsedEmail = "";
+let currentSpreadsheetId = null;
+let scrollerIndex = 0;
+const chartInstances = {};
+
+function showLoading() {
+  loadingOverlayEl.hidden = false;
+}
+
+function hideLoading() {
+  loadingOverlayEl.hidden = true;
+}
+
+function fadeOut(el) {
+  return new Promise((resolve) => {
+    el.classList.add("fade-out");
+    setTimeout(() => {
+      el.hidden = true;
+      el.classList.remove("fade-out");
+      resolve();
+    }, 350);
+  });
+}
+
+function fadeIn(el) {
+  el.hidden = false;
+  el.style.opacity = "0";
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.style.opacity = "";
+      el.classList.add("fade-in");
+    });
+  });
+  setTimeout(() => el.classList.remove("fade-in"), 400);
+}
+
+function buildScroller() {
+  scrollerEl.innerHTML = "";
+  ROUND_OPTIONS.forEach((opt, idx) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "switch-zone__option";
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => setScrollerIndex(idx));
+    scrollerEl.appendChild(btn);
+  });
+}
+
+function setScrollerIndex(idx) {
+  scrollerIndex = Math.max(0, Math.min(ROUND_OPTIONS.length - 1, idx));
+  const options = scrollerEl.querySelectorAll(".switch-zone__option");
+  options.forEach((el, i) => {
+    el.classList.toggle("is-selected", i === scrollerIndex);
+  });
+  const selectedEl = options[scrollerIndex];
+  if (selectedEl) {
+    selectedEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
+}
+
+scrollerPrevBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex - 1));
+scrollerNextBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex + 1));
+
+function renderPanel(slug, entry, type, oniwaraOut) {
+  const panel = document.querySelector(`.chart-panel[data-slug="${slug}"]`);
+  if (!panel || !entry) return;
+
+  panel.querySelector(".chart-panel__org-name").textContent = entry.organization || "-";
+
+  const useOniwaraLabels = slug === "oniwara" && oniwaraOut;
+  const labels = useOniwaraLabels ? BUSINESS_LABELS_ONIWARA_OUT : BUSINESS_LABELS_DEFAULT;
+  const colors = useOniwaraLabels ? BUSINESS_COLORS_ONIWARA_OUT : BUSINESS_COLORS_DEFAULT;
+
+  const chartLabels = BUSINESS_ORDER.map((key) => labels[key]);
+  const chartColors = BUSINESS_ORDER.map((key) => colors[key]);
+  const chartValues = BUSINESS_ORDER.map((key) => entry[key]);
+
+  const canvas = panel.querySelector("canvas");
+  if (chartInstances[slug]) {
+    chartInstances[slug].destroy();
+  }
+  chartInstances[slug] = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: chartLabels,
+      datasets: [
+        {
+          data: chartValues,
+          backgroundColor: chartColors,
+          borderColor: "rgba(255, 255, 255, 0.4)",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          min: 0,
+          max: 25,
+          ticks: { color: "#f3e8dc", stepSize: 5 },
+          grid: { color: "rgba(255, 255, 255, 0.08)" },
+        },
+        x: {
+          ticks: { color: "#f3e8dc", font: { size: 10 } },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+
+  const numberEls = panel.querySelectorAll(".chart-panel__number");
+  const numberFields =
+    type === "Morning"
+      ? [
+          { label: "", key: null },
+          { label: "持有金錢", key: "owned_money" },
+          { label: "當前積分", key: "current_integral" },
+        ]
+      : [
+          { label: "應得收入", key: "expected_income" },
+          { label: "應持金錢", key: "expected_money" },
+          { label: "預期積分", key: "expected_integral" },
+        ];
+
+  numberFields.forEach((field, idx) => {
+    const numberEl = numberEls[idx];
+    const labelEl = numberEl.querySelector(".chart-panel__number-label");
+    const valueEl = numberEl.querySelector(".chart-panel__number-value");
+    const value = field.key ? entry[field.key] : null;
+    if (value === null || value === undefined) {
+      labelEl.textContent = "";
+      valueEl.textContent = "";
+    } else {
+      labelEl.textContent = field.label;
+      valueEl.textContent = value;
+    }
+  });
+}
+
+function evaluateWarning(legal, illegal, brokenTarget) {
+  if (illegal > legal + brokenTarget) {
+    return { level: "severe", text: "⚠ 城市經濟崩壞" };
+  }
+  if (illegal > legal) {
+    return { level: "moderate", text: "⚠ 事業結構崩壞" };
+  }
+  return null;
+}
+
+function renderRoundData(data) {
+  PANEL_SLUGS.forEach((slug) => {
+    renderPanel(slug, data.business_level[slug], data.type, data.oniwara_out);
+  });
+
+  legalBusinessValueEl.textContent = data.legal_business;
+  illegalBusinessValueEl.textContent = data.illegal_business;
+
+  const warning = evaluateWarning(data.legal_business, data.illegal_business, data.broken_target);
+  if (warning) {
+    warningBannerEl.hidden = false;
+    warningBannerEl.textContent = warning.text;
+    warningBannerEl.className = `warning-banner warning-banner--${warning.level}`;
+  } else {
+    warningBannerEl.hidden = true;
+    warningBannerEl.textContent = "";
+    warningBannerEl.className = "warning-banner";
+  }
+
+  roundLabelDisplayEl.textContent = data.round_label;
+}
+
+async function loadRound(day, type) {
+  const url =
+    `${API_BASE}/round?day=${encodeURIComponent(day)}&type=${encodeURIComponent(type)}` +
+    `&spreadsheet_id=${encodeURIComponent(currentSpreadsheetId)}&email=${encodeURIComponent(lastUsedEmail)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || `讀取失敗(${res.status})`);
+  }
+  return res.json();
+}
+
+btnRoundRead.addEventListener("click", async () => {
+  const opt = ROUND_OPTIONS[scrollerIndex];
+  btnRoundRead.disabled = true;
+  await fadeOut(chartGridEl);
+  showLoading();
+  try {
+    const data = await loadRound(opt.day, opt.type);
+    renderRoundData(data);
+  } catch (err) {
+    showToast(err.message || "讀取失敗，請稍後再試", "error");
+  } finally {
+    hideLoading();
+    fadeIn(chartGridEl);
+    btnRoundRead.disabled = false;
+  }
+});
+
+async function enterPage2(spreadsheetId) {
+  currentSpreadsheetId = spreadsheetId;
+
+  await fadeOut(page1El);
+  showLoading();
+
+  try {
+    const data = await loadRound("1st", "Morning");
+    buildScroller();
+    setScrollerIndex(0);
+    switchZoneEl.hidden = false;
+    page2El.hidden = false;
+    renderRoundData(data);
+    fadeIn(page2El);
+  } catch (err) {
+    showToast(err.message || "讀取失敗，請稍後再試", "error");
+    fadeIn(page1El);
+  } finally {
+    hideLoading();
+  }
+}
