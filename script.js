@@ -269,6 +269,9 @@ const BUSINESS_COLORS_ONIWARA_OUT = {
 
 const PANEL_SLUGS = ["oniwara", "mike", "kinugawa", "kouno", "ph003"];
 
+// 在每個長條正上方顯示當前數值(純白色文字)
+Chart.register(ChartDataLabels);
+
 const page1El = document.querySelector(".page1");
 const page2El = document.getElementById("page2");
 const chartGridEl = document.querySelector(".chart-grid");
@@ -397,7 +400,15 @@ function renderPanel(slug, entry, type, oniwaraOut) {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          color: "#fff",
+          anchor: "end",
+          align: "top",
+          font: { weight: "bold", size: 16 },
+        },
+      },
       scales: {
         y: {
           min: 0,
@@ -406,7 +417,7 @@ function renderPanel(slug, entry, type, oniwaraOut) {
           grid: { color: "rgba(255, 255, 255, 0.08)" },
         },
         x: {
-          ticks: { color: "#f3e8dc", font: { size: 10 } },
+          ticks: { color: "#f3e8dc", font: { size: 20 } },
           grid: { display: false },
         },
       },
