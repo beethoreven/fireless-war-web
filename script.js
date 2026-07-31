@@ -470,7 +470,16 @@ async function loadRound(day, type) {
   return res.json();
 }
 
+let lastRoundReadClickAt = 0;
+
 btnRoundRead.addEventListener("click", async () => {
+  // 5 秒內重複按,靜默忽略(不顯示任何提示、按鈕外觀不變),避免短時間內連續打 API
+  const now = Date.now();
+  if (now - lastRoundReadClickAt < 5000) {
+    return;
+  }
+  lastRoundReadClickAt = now;
+
   const opt = ROUND_OPTIONS[scrollerIndex];
   btnRoundRead.disabled = true;
   await fadeOut(chartGridEl);
