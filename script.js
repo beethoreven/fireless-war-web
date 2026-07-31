@@ -319,6 +319,8 @@ function fadeIn(el) {
   setTimeout(() => el.classList.remove("fade-in"), 400);
 }
 
+const WHEEL_ROW_HEIGHT = 40;
+
 function buildScroller() {
   scrollerEl.innerHTML = "";
   ROUND_OPTIONS.forEach((opt, idx) => {
@@ -331,17 +333,31 @@ function buildScroller() {
   });
 }
 
-function setScrollerIndex(idx) {
-  scrollerIndex = Math.max(0, Math.min(ROUND_OPTIONS.length - 1, idx));
+function updateScrollerSelectedClass() {
   const options = scrollerEl.querySelectorAll(".switch-zone__option");
   options.forEach((el, i) => {
     el.classList.toggle("is-selected", i === scrollerIndex);
   });
-  const selectedEl = options[scrollerIndex];
-  if (selectedEl) {
-    selectedEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }
 }
+
+// 點選項/按箭頭 => 用程式捲到定位(平滑捲動)
+function setScrollerIndex(idx) {
+  scrollerIndex = Math.max(0, Math.min(ROUND_OPTIONS.length - 1, idx));
+  updateScrollerSelectedClass();
+  scrollerEl.scrollTo({ top: scrollerIndex * WHEEL_ROW_HEIGHT, behavior: "smooth" });
+}
+
+// 使用者直接滑/捲動滾輪 => 停下來後,同步目前捲到哪一格,不要再觸發程式化捲動
+// (原生 scroll-snap 已經處理好吸附定位,這裡只是讓資料狀態跟畫面對齊)
+let wheelScrollSettleTimer = null;
+scrollerEl.addEventListener("scroll", () => {
+  clearTimeout(wheelScrollSettleTimer);
+  wheelScrollSettleTimer = setTimeout(() => {
+    const nearestIdx = Math.round(scrollerEl.scrollTop / WHEEL_ROW_HEIGHT);
+    scrollerIndex = Math.max(0, Math.min(ROUND_OPTIONS.length - 1, nearestIdx));
+    updateScrollerSelectedClass();
+  }, 120);
+});
 
 scrollerPrevBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex - 1));
 scrollerNextBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex + 1));
@@ -506,9 +522,13 @@ async function enterPage2(spreadsheetId) {
     const data = await loadRound("1st", "Morning");
     buildScroller();
     setScrollerIndex(0);
+    // 圖表要在容器還是 hidden 的狀態下建立,讓 Chart.js 拿到的初始量測是「不存在版面」
+    // 而不是「還沒穩定的版面」;等下面解除 hidden 時,Chart.js 的 ResizeObserver
+    // 會偵測到容器變成可見、量到正確尺寸,自動重繪。順序顛倒(先顯示才建圖表)
+    // 曾經在正式環境重現過量測到錯誤尺寸、整頁被撐爆需要捲動的問題。
+    renderRoundData(data);
     switchZoneEl.hidden = false;
     page2El.hidden = false;
-    renderRoundData(data);
     fadeIn(page2El);
   } catch (err) {
     showToast(err.message || "讀取失敗，請稍後再試", "error");

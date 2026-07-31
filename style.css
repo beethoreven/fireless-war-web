@@ -19,7 +19,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  height: 100%;
 }
 
 /* [hidden] 屬性一定要贏過其他 display 規則,不然切換 hidden 沒有效果 */
@@ -33,7 +33,13 @@ body {
   font-family: var(--font-family);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  /* 一定要是明確的 height(不是 min-height),讓 flex 子元素的 1fr/flex:1
+     有真正的高度上限可以依據——不然 Chart.js 圖表如果量測時機沒抓好,
+     量到錯誤的尺寸,沒有任何東西擋著讓整個頁面跟著長大(第一次進頁面二
+     曾經因為這樣爆版,重新整理過一次才恢復正常,就是這個原因)。
+     真的內容比視窗高時,靠 overflow-y: auto 讓 body 自己捲動。 */
+  height: 100vh;
+  overflow-y: auto;
 }
 
 /* 頂部列:右上角預留帳號登入/登出區塊 */
@@ -52,7 +58,7 @@ body {
   border: 1px solid var(--panel-border);
   border-radius: 999px;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 1.7rem;
   cursor: default;
   user-select: none;
 }
@@ -84,7 +90,7 @@ body {
 
 .title {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 2.8rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.05em;
@@ -97,7 +103,7 @@ body {
 }
 
 .field-label {
-  font-size: 0.85rem;
+  font-size: 1.7rem;
   color: var(--text-muted);
 }
 
@@ -109,7 +115,7 @@ select {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: 1rem;
+  font-size: 2rem;
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -153,6 +159,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding: 10px 2px;
   -moz-appearance: textfield;
   min-width: 0;
+  font-size: 1.4rem;
 }
 
 .dt-input::-webkit-outer-spin-button,
@@ -162,16 +169,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .dt-input--year {
-  width: 58px;
+  width: 92px;
 }
 
 .dt-input--short {
-  width: 36px;
+  width: 68px;
 }
 
 .dt-unit {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 1.6rem;
   margin-right: 2px;
   flex-shrink: 0;
 }
@@ -183,7 +190,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: none;
   border-radius: 8px;
   padding: 13px;
-  font-size: 1rem;
+  font-size: 2rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease, opacity 0.15s ease;
@@ -249,7 +256,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .chart-panel__org-name {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 1.8rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -277,13 +284,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .chart-panel__number-label {
-  font-size: 0.62rem;
+  font-size: 1.24rem;
   color: var(--text-muted);
   white-space: nowrap;
 }
 
 .chart-panel__number-value {
-  font-size: 0.88rem;
+  font-size: 1.76rem;
   font-weight: 700;
 }
 
@@ -302,7 +309,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .common-data-panel__title {
   margin: 0 0 4px;
-  font-size: 0.85rem;
+  font-size: 1.7rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -314,12 +321,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .common-data-panel__label {
-  font-size: 0.82rem;
+  font-size: 1.64rem;
   color: var(--text-muted);
 }
 
 .common-data-panel__value {
-  font-size: 1.1rem;
+  font-size: 2.2rem;
   font-weight: 700;
 }
 
@@ -327,7 +334,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   margin-top: auto;
   padding: 8px 10px;
   border-radius: 8px;
-  font-size: 0.78rem;
+  font-size: 1.56rem;
   font-weight: 700;
   text-align: center;
 }
@@ -390,61 +397,95 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .switch-zone__current-label {
-  font-size: 0.85rem;
+  font-size: 1.7rem;
   color: var(--text-muted);
   min-width: 84px;
 }
 
-.switch-zone__scroller-wrap {
+.switch-zone__wheel-wrap {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   flex: 1;
   min-width: 0;
 }
 
-.switch-zone__arrow {
+.switch-zone__wheel-arrow {
   background: transparent;
-  border: 1px solid var(--panel-border);
-  color: var(--text-primary);
+  border: none;
+  color: var(--text-muted);
   border-radius: 6px;
-  width: 28px;
-  height: 28px;
-  font-size: 1rem;
+  width: 40px;
+  height: 18px;
+  font-size: 0.9rem;
   cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch-zone__wheel-arrow:hover {
+  color: var(--accent-gold);
+}
+
+.switch-zone__wheel-window {
+  position: relative;
+  width: 220px;
+  height: 120px;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
-.switch-zone__arrow:hover {
-  background: rgba(255, 255, 255, 0.08);
+.switch-zone__wheel {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  padding: 40px 0;
 }
 
-.switch-zone__scroller {
-  flex: 1;
-  display: flex;
-  overflow-x: auto;
-  gap: 6px;
-  scroll-behavior: smooth;
-  min-width: 0;
+.switch-zone__wheel::-webkit-scrollbar {
+  display: none;
 }
 
 .switch-zone__option {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--panel-border);
-  background: transparent;
+  height: 40px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 1.5rem;
   color: var(--text-muted);
-  cursor: pointer;
   white-space: nowrap;
+  transition: color 0.15s ease, opacity 0.15s ease, font-size 0.15s ease;
+  opacity: 0.45;
+  cursor: pointer;
+  background: transparent;
+  border: none;
 }
 
 .switch-zone__option.is-selected {
-  border-color: var(--accent-gold);
   color: var(--accent-gold);
   font-weight: 700;
+  opacity: 1;
+  font-size: 1.7rem;
+}
+
+.switch-zone__wheel-highlight {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 40px;
+  transform: translateY(-50%);
+  border-top: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  pointer-events: none;
 }
 
 .switch-zone__read-btn {
@@ -454,7 +495,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: none;
   border-radius: 8px;
   padding: 8px 20px;
-  font-size: 0.9rem;
+  font-size: 1.8rem;
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
@@ -476,7 +517,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-primary);
   padding: 12px 22px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: 1.8rem;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
@@ -548,7 +589,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: 1px solid var(--accent-gold);
   border-radius: 8px;
   padding: 8px 24px;
-  font-size: 0.95rem;
+  font-size: 1.9rem;
   cursor: pointer;
   transition: background 0.15s ease;
 }
