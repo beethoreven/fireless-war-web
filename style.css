@@ -382,18 +382,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* 底部切換區 */
 .switch-zone {
   min-height: 64px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 12px;
-  padding: 10px 24px;
-  flex-wrap: wrap;
+  padding: 10px 24px 26px;
 }
 
 .switch-zone__current-label {
   font-size: 2.4rem;
   font-weight: 700;
   color: #fff;
-  flex: 0 0 230px;
   text-align: center;
   white-space: nowrap;
   margin-top: -6px;
@@ -404,9 +403,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   flex-direction: row;
   align-items: center;
   gap: 12px;
-  flex: 1;
-  min-width: 0;
-  justify-content: center;
 }
 
 .switch-zone__wheel-arrow {
@@ -499,6 +495,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
+  justify-self: end;
   transition: background 0.15s ease;
   margin-top: -6px;
 }
