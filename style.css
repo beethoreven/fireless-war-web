@@ -50,17 +50,64 @@ body {
   padding: 16px 24px;
 }
 
+.google-signin-btn {
+  line-height: 0;
+}
+
 .account-slot {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
   border: 1px solid var(--panel-border);
   border-radius: 999px;
-  color: var(--text-muted);
+  color: var(--text-primary);
   font-size: 0.85rem;
-  cursor: default;
+  cursor: pointer;
   user-select: none;
+  max-width: 220px;
+}
+
+.account-slot:hover {
+  border-color: var(--accent-gold);
+}
+
+.account-slot__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #3a0c20;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 100px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  z-index: 60;
+}
+
+.account-dropdown__item {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.account-dropdown__item:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .account-slot__icon {

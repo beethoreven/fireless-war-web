@@ -8,7 +8,6 @@ const fieldMonth = document.getElementById("field-month");
 const fieldDay = document.getElementById("field-day");
 const fieldHour = document.getElementById("field-hour");
 const fieldMinute = document.getElementById("field-minute");
-const fieldEmail = document.getElementById("field-email");
 const btnReadRecord = document.getElementById("btn-read-record");
 
 const toastEl = document.getElementById("toast");
@@ -18,6 +17,114 @@ const dialogYesBtn = document.getElementById("dialog-yes");
 const dialogNoBtn = document.getElementById("dialog-no");
 
 let toastTimer = null;
+
+// ===== Google 登入 =====
+
+const GOOGLE_CLIENT_ID = "665970888301-g3mjmlrba8aosq5j8jlkgqbukmp3u76p.apps.googleusercontent.com";
+
+const topBarEl = document.getElementById("top-bar");
+const googleSigninBtnEl = document.getElementById("google-signin-button");
+const accountSlotEl = document.getElementById("account-slot");
+const accountLabelEl = document.getElementById("account-label");
+const accountDropdownEl = document.getElementById("account-dropdown");
+const btnSignOut = document.getElementById("btn-sign-out");
+
+let currentIdToken = null;
+let currentAuthorized = false;
+
+function authHeaders() {
+  return currentIdToken ? { Authorization: `Bearer ${currentIdToken}` } : {};
+}
+
+function updateReadButtonLock() {
+  // 這裡鎖住的是「按鈕看起來能不能按」,真正擋掉未授權存取的是後端每支 API
+  // 自己驗證 token——就算有人用 devtools 把 disabled 拔掉,後端一樣會擋。
+  btnReadRecord.disabled = !currentAuthorized;
+}
+
+function showSignedOutUI() {
+  currentIdToken = null;
+  currentAuthorized = false;
+  googleSigninBtnEl.hidden = false;
+  accountSlotEl.hidden = true;
+  accountDropdownEl.hidden = true;
+  updateReadButtonLock();
+}
+
+function showSignedInUI(email) {
+  googleSigninBtnEl.hidden = true;
+  accountSlotEl.hidden = false;
+  accountLabelEl.textContent = email ? email.split("@")[0] : "帳號";
+}
+
+async function checkAuthStatus() {
+  if (!currentIdToken) return;
+  try {
+    const res = await fetch(`${API_BASE}/auth/status`, { headers: authHeaders() });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 200) {
+      currentAuthorized = !!data.authorized;
+      showSignedInUI(data.email);
+      if (!currentAuthorized) {
+        showToast("此帳號尚未獲得授權", "error");
+      }
+    } else {
+      // token 過期或無效,視同沒登入,回到登入前的狀態
+      showSignedOutUI();
+      showToast("登入已過期，請重新登入", "error");
+    }
+  } catch (err) {
+    currentAuthorized = false;
+  }
+  updateReadButtonLock();
+}
+
+function handleCredentialResponse(response) {
+  currentIdToken = response.credential;
+  checkAuthStatus();
+}
+
+function initGoogleSignIn() {
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleCredentialResponse,
+    auto_select: true,
+  });
+  google.accounts.id.renderButton(googleSigninBtnEl, {
+    theme: "filled_black",
+    size: "medium",
+    shape: "pill",
+    text: "signin",
+  });
+  // 瀏覽器如果還留著 Google 的登入狀態,嘗試靜默登入,
+  // 不需要使用者手動點——這是「重新整理就能解決,不用重新登入」的關鍵。
+  google.accounts.id.prompt();
+}
+
+initGoogleSignIn();
+
+// ID Token 大約 1 小時過期,但一場遊戲可能長達 6 小時,
+// 每 45 分鐘嘗試一次靜默重新登入,盡量不要讓使用者玩到一半突然被登出。
+setInterval(() => {
+  if (currentIdToken) {
+    google.accounts.id.prompt();
+  }
+}, 45 * 60 * 1000);
+
+accountSlotEl.addEventListener("click", () => {
+  accountDropdownEl.hidden = !accountDropdownEl.hidden;
+});
+
+document.addEventListener("click", (e) => {
+  if (!accountSlotEl.contains(e.target)) {
+    accountDropdownEl.hidden = true;
+  }
+});
+
+btnSignOut.addEventListener("click", () => {
+  google.accounts.id.disableAutoSelect();
+  showSignedOutUI();
+});
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -37,7 +144,7 @@ function showToast(message, type) {
 }
 
 function setLoading(isLoading) {
-  btnReadRecord.disabled = isLoading;
+  btnReadRecord.disabled = isLoading || !currentAuthorized;
   btnReadRecord.textContent = isLoading ? "讀取中…" : "讀取記錄表";
 }
 
@@ -115,18 +222,6 @@ function validateDatetime(raw) {
   return { ok: true, value: { year, month, day, hour, minute } };
 }
 
-function validateEmail(raw) {
-  const email = raw.trim();
-  if (!email) {
-    return { ok: false, error: "缺少 Email 參數" };
-  }
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    return { ok: false, error: "Email 格式驗證失敗" };
-  }
-  return { ok: true, value: email };
-}
-
 function toDatetimeParam(dt) {
   return `${pad4(dt.year)}_${pad2(dt.month)}_${pad2(dt.day)}_${pad2(dt.hour)}_${pad2(dt.minute)}`;
 }
@@ -135,35 +230,35 @@ function hideDialog() {
   dialogOverlay.classList.remove("visible");
 }
 
-function showNotFoundDialog(dt, datetimeParam, email) {
+function showNotFoundDialog(dt, datetimeParam) {
   dialogMessage.textContent =
     `無法找到${dt.year}年${pad2(dt.month)}月${pad2(dt.day)}日${pad2(dt.hour)}:${pad2(dt.minute)}的遊戲紀錄，請問是否新建`;
   dialogOverlay.classList.add("visible");
 
   dialogYesBtn.onclick = () => {
     hideDialog();
-    createRecord(datetimeParam, email);
+    createRecord(datetimeParam);
   };
   dialogNoBtn.onclick = () => {
     hideDialog();
   };
 }
 
-async function fetchRecord(dt, datetimeParam, email) {
+async function fetchRecord(dt, datetimeParam) {
   setLoading(true);
   try {
     const res = await fetch(
-      `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}&email=${encodeURIComponent(email)}`
+      `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}`,
+      { headers: authHeaders() }
     );
 
     if (res.status === 200) {
       const data = await res.json();
-      lastUsedEmail = email;
       await enterPage2(data.spreadsheet_id);
     } else if (res.status === 404) {
-      showNotFoundDialog(dt, datetimeParam, email);
+      showNotFoundDialog(dt, datetimeParam);
     } else if (res.status === 401) {
-      showToast("Email 未獲授權", "error");
+      showToast("未登入或此帳號未獲授權", "error");
     } else {
       const data = await res.json().catch(() => ({}));
       showToast(data.error || "讀取時發生錯誤，請稍後再試", "error");
@@ -175,12 +270,12 @@ async function fetchRecord(dt, datetimeParam, email) {
   }
 }
 
-async function createRecord(datetimeParam, email) {
+async function createRecord(datetimeParam) {
   setLoading(true);
   try {
     const res = await fetch(
-      `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}&email=${encodeURIComponent(email)}`,
-      { method: "POST" }
+      `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}`,
+      { method: "POST", headers: authHeaders() }
     );
 
     if (res.status === 201) {
@@ -203,14 +298,8 @@ btnReadRecord.addEventListener("click", () => {
     return;
   }
 
-  const emailResult = validateEmail(fieldEmail.value);
-  if (!emailResult.ok) {
-    showToast(emailResult.error, "error");
-    return;
-  }
-
   const datetimeParam = toDatetimeParam(dtResult.value);
-  fetchRecord(dtResult.value, datetimeParam, emailResult.value);
+  fetchRecord(dtResult.value, datetimeParam);
 });
 
 // ===== 頁面二 =====
@@ -286,7 +375,6 @@ const legalBusinessValueEl = document.getElementById("legal-business-value");
 const illegalBusinessValueEl = document.getElementById("illegal-business-value");
 const warningBannerEl = document.getElementById("warning-banner");
 
-let lastUsedEmail = "";
 let currentSpreadsheetId = null;
 let scrollerIndex = 0;
 const chartInstances = {};
@@ -509,8 +597,8 @@ function renderRoundData(data) {
 async function loadRound(day, type) {
   const url =
     `${API_BASE}/round?day=${encodeURIComponent(day)}&type=${encodeURIComponent(type)}` +
-    `&spreadsheet_id=${encodeURIComponent(currentSpreadsheetId)}&email=${encodeURIComponent(lastUsedEmail)}`;
-  const res = await fetch(url);
+    `&spreadsheet_id=${encodeURIComponent(currentSpreadsheetId)}`;
+  const res = await fetch(url, { headers: authHeaders() });
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.error || `讀取失敗(${res.status})`);
@@ -561,6 +649,7 @@ async function enterPage2(spreadsheetId) {
     renderRoundData(data);
     switchZoneEl.hidden = false;
     page2El.hidden = false;
+    topBarEl.hidden = true; // 帳號/登入按鈕只在首頁出現
     fadeIn(page2El);
   } catch (err) {
     showToast(err.message || "讀取失敗，請稍後再試", "error");
