@@ -378,6 +378,8 @@ Chart.register(ChartDataLabels);
 
 const page1El = document.querySelector(".page1");
 const page2El = document.getElementById("page2");
+const page3El = document.getElementById("page3");
+const btnStartGame = document.getElementById("btn-start-game");
 const chartGridEl = document.querySelector(".chart-grid");
 const loadingOverlayEl = document.getElementById("loading-overlay");
 const switchZoneEl = document.getElementById("switch-zone");
@@ -665,6 +667,17 @@ async function enterPage2(spreadsheetId) {
   currentSpreadsheetId = spreadsheetId;
 
   await fadeOut(page1El);
+  topBarEl.hidden = true; // 帳號/登入按鈕只在首頁出現
+  page2El.hidden = false;
+  fadeIn(page2El);
+}
+
+btnStartGame.addEventListener("click", () => {
+  enterPage3();
+});
+
+async function enterPage3() {
+  await fadeOut(page2El);
   showLoading();
 
   try {
@@ -677,12 +690,11 @@ async function enterPage2(spreadsheetId) {
     // 曾經在正式環境重現過量測到錯誤尺寸、整頁被撐爆需要捲動的問題。
     renderRoundData(data);
     switchZoneEl.hidden = false;
-    page2El.hidden = false;
-    topBarEl.hidden = true; // 帳號/登入按鈕只在首頁出現
-    fadeIn(page2El);
+    page3El.hidden = false;
+    fadeIn(page3El);
   } catch (err) {
     showToast(err.message || "讀取失敗，請稍後再試", "error");
-    fadeIn(page1El);
+    fadeIn(page2El); // 讀取失敗退回介紹頁重試,而不是打回第一頁重新讀取記錄表
   } finally {
     hideLoading();
   }
