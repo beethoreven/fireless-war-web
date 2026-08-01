@@ -158,9 +158,9 @@ function showToast(message, type) {
   }, 2800);
 }
 
-function setLoading(isLoading) {
+function setLoading(isLoading, loadingText = "讀取中…") {
   btnReadRecord.disabled = isLoading || !currentAuthorized;
-  btnReadRecord.textContent = isLoading ? "讀取中…" : "讀取記錄表";
+  btnReadRecord.textContent = isLoading ? loadingText : "讀取記錄表";
 }
 
 function populateTimeSelect(selectEl, max) {
@@ -286,7 +286,7 @@ async function fetchRecord(dt, datetimeParam) {
 }
 
 async function createRecord(datetimeParam) {
-  setLoading(true);
+  setLoading(true, "創建中…");
   try {
     const res = await fetch(
       `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}`,
