@@ -84,6 +84,21 @@ function handleCredentialResponse(response) {
   checkAuthStatus();
 }
 
+// 除錯用:google.accounts.id.prompt() 預設失敗時完全不會有任何畫面或錯誤訊息,
+// 只能靠這個 notification callback 才知道它到底有沒有跑、為什麼沒跑。
+// 診斷完問題後這段可以整個移除。
+function logPromptNotification(notification) {
+  if (notification.isNotDisplayed()) {
+    console.warn("[GIS] 靜默登入完全沒有顯示，原因:", notification.getNotDisplayedReason());
+  } else if (notification.isSkippedMoment()) {
+    console.warn("[GIS] 靜默登入被跳過，原因:", notification.getSkippedReason());
+  } else if (notification.isDismissedMoment()) {
+    console.warn("[GIS] 靜默登入被關閉，原因:", notification.getDismissedReason());
+  } else {
+    console.log("[GIS] 靜默登入 moment 正常進行中");
+  }
+}
+
 function initGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
@@ -98,7 +113,7 @@ function initGoogleSignIn() {
   });
   // 瀏覽器如果還留著 Google 的登入狀態,嘗試靜默登入,
   // 不需要使用者手動點——這是「重新整理就能解決,不用重新登入」的關鍵。
-  google.accounts.id.prompt();
+  google.accounts.id.prompt(logPromptNotification);
 }
 
 initGoogleSignIn();
@@ -107,7 +122,7 @@ initGoogleSignIn();
 // 每 45 分鐘嘗試一次靜默重新登入,盡量不要讓使用者玩到一半突然被登出。
 setInterval(() => {
   if (currentIdToken) {
-    google.accounts.id.prompt();
+    google.accounts.id.prompt(logPromptNotification);
   }
 }, 45 * 60 * 1000);
 
