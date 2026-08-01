@@ -373,6 +373,8 @@ const scrollerNextBtn = document.getElementById("scroller-next");
 const btnRoundRead = document.getElementById("btn-round-read");
 const legalBusinessValueEl = document.getElementById("legal-business-value");
 const illegalBusinessValueEl = document.getElementById("illegal-business-value");
+const hotBusinessRowEl = document.getElementById("hot-business-row");
+const hotBusinessValueEl = document.getElementById("hot-business-value");
 const warningBannerEl = document.getElementById("warning-banner");
 
 let currentSpreadsheetId = null;
@@ -487,6 +489,9 @@ function renderPanel(slug, entry, type, oniwaraOut, mikeOut, kounoSingle) {
   const chartLabels = BUSINESS_ORDER.map((key) => labels[key]);
   const chartColors = BUSINESS_ORDER.map((key) => colors[key]);
   const chartValues = BUSINESS_ORDER.map((key) => entry[key]);
+  // 黑色長條在深色底圖上會消失,只有黑色的那條需要邊框讓它看得見,其他長條不要邊框
+  const chartBorderColors = chartColors.map((color) => (color === "#2b2b2b" ? "rgba(255, 255, 255, 0.4)" : "transparent"));
+  const chartBorderWidths = chartColors.map((color) => (color === "#2b2b2b" ? 1 : 0));
 
   const canvas = panel.querySelector("canvas");
   if (chartInstances[slug]) {
@@ -500,8 +505,8 @@ function renderPanel(slug, entry, type, oniwaraOut, mikeOut, kounoSingle) {
         {
           data: chartValues,
           backgroundColor: chartColors,
-          borderColor: "rgba(255, 255, 255, 0.4)",
-          borderWidth: 1,
+          borderColor: chartBorderColors,
+          borderWidth: chartBorderWidths,
         },
       ],
     },
@@ -534,17 +539,18 @@ function renderPanel(slug, entry, type, oniwaraOut, mikeOut, kounoSingle) {
   });
 
   const numberEls = panel.querySelectorAll(".chart-panel__number");
+  // money:true 的欄位代表遊戲裡的「百萬」單位,顯示時數字後面要加 M
   const numberFields =
     type === "Morning"
       ? [
-          { label: "", key: null },
-          { label: "持有金錢", key: "owned_money" },
-          { label: "當前積分", key: "current_integral" },
+          { label: "", key: null, money: false },
+          { label: "持有金錢", key: "owned_money", money: true },
+          { label: "當前積分", key: "current_integral", money: false },
         ]
       : [
-          { label: "應得收入", key: "expected_income" },
-          { label: "應持金錢", key: "expected_money" },
-          { label: "預期積分", key: "expected_integral" },
+          { label: "應得收入", key: "expected_income", money: true },
+          { label: "應持金錢", key: "expected_money", money: true },
+          { label: "預期積分", key: "expected_integral", money: false },
         ];
 
   numberFields.forEach((field, idx) => {
@@ -557,7 +563,7 @@ function renderPanel(slug, entry, type, oniwaraOut, mikeOut, kounoSingle) {
       valueEl.textContent = "";
     } else {
       labelEl.textContent = field.label;
-      valueEl.textContent = value;
+      valueEl.textContent = field.money ? `${value}M` : value;
     }
   });
 }
@@ -579,6 +585,14 @@ function renderRoundData(data) {
 
   legalBusinessValueEl.textContent = data.legal_business;
   illegalBusinessValueEl.textContent = data.illegal_business;
+
+  if (data.kiyoshiro_escape) {
+    hotBusinessRowEl.hidden = false;
+    hotBusinessValueEl.textContent = BUSINESS_LABELS_DEFAULT[data.hot_business] || "-";
+  } else {
+    hotBusinessRowEl.hidden = true;
+    hotBusinessValueEl.textContent = "-";
+  }
 
   const warning = evaluateWarning(data.legal_business, data.illegal_business, data.broken_target);
   if (warning) {

@@ -86,24 +86,25 @@ body {
   background: #3a0c20;
   border: 1px solid var(--panel-border);
   border-radius: 10px;
-  padding: 6px;
-  min-width: 100px;
+  padding: 4px;
+  display: inline-block;
+  width: max-content;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
   z-index: 60;
 }
 
 .account-dropdown__item {
   display: block;
-  width: 100%;
   font-family: inherit;
   background: transparent;
   border: none;
   color: var(--text-primary);
   font-size: 0.85rem;
   text-align: left;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .account-dropdown__item:hover {
@@ -198,7 +199,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 3px;
+  justify-content: space-between;
 }
 
 .dt-input {
@@ -322,6 +323,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   justify-content: space-between;
   gap: 4px;
   margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--panel-border);
 }
 
 .chart-panel__number {
@@ -565,7 +568,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-primary);
   padding: 12px 22px;
   border-radius: 999px;
-  font-size: 1.8rem;
+  font-size: 0.9rem;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
@@ -637,7 +640,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: 1px solid var(--accent-gold);
   border-radius: 8px;
   padding: 8px 24px;
-  font-size: 1.9rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: background 0.15s ease;
 }
