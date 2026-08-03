@@ -640,7 +640,18 @@ async function loadRound(day, type) {
   const url =
     `${API_BASE}/round?day=${encodeURIComponent(day)}&type=${encodeURIComponent(type)}` +
     `&spreadsheet_id=${encodeURIComponent(currentSpreadsheetId)}`;
-  const res = await fetch(url, { headers: authHeaders() });
+
+  let res;
+  try {
+    res = await fetch(url, { headers: authHeaders() });
+  } catch (err) {
+    // fetch() 本身失敗時(連線逾時、CORS 被擋、離線等),err.message 是瀏覽器自己
+    // 產生的英文文字(例如 "Failed to fetch"),不能直接顯示給使用者,一律換成
+    // 固定的中文訊息——呼叫端(enterPage3/btnRoundRead)是直接把 err.message 拿去
+    // 顯示在 toast 上的,所以這裡丟出去的 Error 一定要保證訊息本身是中文。
+    throw new Error("連線失敗,請確認網路連線或稍後再試");
+  }
+
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.error || `讀取失敗(${res.status})`);
