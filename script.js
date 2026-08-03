@@ -1,5 +1,13 @@
 const API_BASE = "https://fireless-war-backend.onrender.com";
 
+// Render 免費方案閒置約 15 分鐘會休眠。GitHub Actions 的排程 keep-alive
+// 無法保證真的每 10 分鐘執行(GitHub 自己的 schedule 觸發時間常常延遲數小時),
+// 所以只要這個分頁還開著,就自己每 5 分鐘打一次 /status,確保遊戲進行中途
+// 不會被 Render 判定閒置——不需要登入,/status 本來就是為了這個用途設計的公開端點。
+setInterval(() => {
+  fetch(`${API_BASE}/status`).catch(() => {});
+}, 5 * 60 * 1000);
+
 const datePicker = document.getElementById("date-picker");
 const hourPicker = document.getElementById("hour-picker");
 const minutePicker = document.getElementById("minute-picker");
