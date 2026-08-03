@@ -4,9 +4,12 @@ const API_BASE = "https://fireless-war-backend.onrender.com";
 // 無法保證真的每 10 分鐘執行(GitHub 自己的 schedule 觸發時間常常延遲數小時),
 // 所以只要這個分頁還開著,就自己每 5 分鐘打一次 /status,確保遊戲進行中途
 // 不會被 Render 判定閒置——不需要登入,/status 本來就是為了這個用途設計的公開端點。
-setInterval(() => {
+// 一開始就先打一次(不等第一個 5 分鐘),盡量提早把可能還在睡的後端叫醒。
+function pingKeepAlive() {
   fetch(`${API_BASE}/status`).catch(() => {});
-}, 5 * 60 * 1000);
+}
+pingKeepAlive();
+setInterval(pingKeepAlive, 5 * 60 * 1000);
 
 const datePicker = document.getElementById("date-picker");
 const hourPicker = document.getElementById("hour-picker");
