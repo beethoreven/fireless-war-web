@@ -36,41 +36,19 @@
     <h1 class="title">場次讀取</h1>
 
     <section class="field-group">
-      <label class="field-label" for="date-picker">選擇日期時間</label>
-      <div class="picker-row">
-        <input type="date" id="date-picker" class="date-picker">
-        <select id="hour-picker" class="time-select" aria-label="時"></select>
-        <span class="dt-unit">時</span>
-        <select id="minute-picker" class="time-select" aria-label="分"></select>
-        <span class="dt-unit">分</span>
-      </div>
+      <p class="demo-message">Demo版本不需選取日期時間。</p>
+      <p class="demo-message">Date time is not needed for demo version。</p>
     </section>
 
-    <section class="field-group manual-datetime">
-      <span class="field-label">日期時間</span>
-      <div class="manual-datetime__row">
-        <input type="number" id="field-year" class="dt-input dt-input--year" placeholder="YYYY" min="1970" max="9999" inputmode="numeric">
-        <span class="dt-unit">年</span>
-        <input type="number" id="field-month" class="dt-input dt-input--short" placeholder="MM" min="1" max="12" inputmode="numeric">
-        <span class="dt-unit">月</span>
-        <input type="number" id="field-day" class="dt-input dt-input--short" placeholder="DD" min="1" max="31" inputmode="numeric">
-        <span class="dt-unit">日</span>
-        <input type="number" id="field-hour" class="dt-input dt-input--short" placeholder="hh" min="0" max="23" inputmode="numeric">
-        <span class="dt-unit">時</span>
-        <input type="number" id="field-minute" class="dt-input dt-input--short" placeholder="mm" min="0" max="59" inputmode="numeric">
-        <span class="dt-unit">分</span>
-      </div>
-    </section>
-
-    <button id="btn-read-record" class="btn-primary" disabled>讀取記錄表</button>
+    <button id="btn-read-record" class="btn-primary" disabled>讀取Demo版本檔案<br>Load demo file</button>
   </div>
 </main>
 
 <main class="page2" id="page2" hidden>
   <div class="page-intro">
-    <p class="page-intro__line">為期七日</p>
-    <p class="page-intro__line">無火戰爭</p>
-    <button id="btn-start-game" class="btn-primary page-intro__btn">正式開始！</button>
+    <p class="page-intro__line">讀取demo</p>
+    <p class="page-intro__line">Load demo</p>
+    <button id="btn-start-game" class="btn-primary page-intro__btn">Start!</button>
   </div>
 </main>
 
@@ -104,11 +82,11 @@
 
     <section class="common-data-panel" style="grid-area: common;">
       <div class="common-data-panel__row">
-        <span class="common-data-panel__label">合法事業</span>
+        <span class="common-data-panel__label">指數1</span>
         <span class="common-data-panel__value" id="legal-business-value">-</span>
       </div>
       <div class="common-data-panel__row">
-        <span class="common-data-panel__label">非法事業</span>
+        <span class="common-data-panel__label">指數2</span>
         <span class="common-data-panel__value" id="illegal-business-value">-</span>
       </div>
       <div class="common-data-panel__row" id="hot-business-row" hidden>
@@ -177,16 +155,6 @@
 </footer>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
-<div id="dialog-overlay" class="dialog-overlay">
-  <div class="dialog-box">
-    <p id="dialog-message" class="dialog-message"></p>
-    <div class="dialog-actions">
-      <button id="dialog-yes" class="btn-secondary">是</button>
-      <button id="dialog-no" class="btn-secondary">否</button>
-    </div>
-  </div>
-</div>
 
 <script src="script.js"></script>
 </body>

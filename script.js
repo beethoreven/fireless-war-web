@@ -11,21 +11,9 @@ function pingKeepAlive() {
 pingKeepAlive();
 setInterval(pingKeepAlive, 5 * 60 * 1000);
 
-const datePicker = document.getElementById("date-picker");
-const hourPicker = document.getElementById("hour-picker");
-const minutePicker = document.getElementById("minute-picker");
-const fieldYear = document.getElementById("field-year");
-const fieldMonth = document.getElementById("field-month");
-const fieldDay = document.getElementById("field-day");
-const fieldHour = document.getElementById("field-hour");
-const fieldMinute = document.getElementById("field-minute");
 const btnReadRecord = document.getElementById("btn-read-record");
 
 const toastEl = document.getElementById("toast");
-const dialogOverlay = document.getElementById("dialog-overlay");
-const dialogMessage = document.getElementById("dialog-message");
-const dialogYesBtn = document.getElementById("dialog-yes");
-const dialogNoBtn = document.getElementById("dialog-no");
 
 let toastTimer = null;
 
@@ -152,14 +140,6 @@ btnSignOut.addEventListener("click", () => {
   showSignedOutUI();
 });
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-
-function pad4(n) {
-  return String(n).padStart(4, "0");
-}
-
 function showToast(message, type) {
   clearTimeout(toastTimer);
   toastEl.textContent = message;
@@ -171,118 +151,18 @@ function showToast(message, type) {
 
 function setLoading(isLoading, loadingText = "讀取中…") {
   btnReadRecord.disabled = isLoading || !currentAuthorized;
-  btnReadRecord.textContent = isLoading ? loadingText : "讀取記錄表";
+  btnReadRecord.innerHTML = isLoading ? loadingText : "讀取Demo版本檔案<br>Load demo file";
 }
 
-function populateTimeSelect(selectEl, max) {
-  const blank = document.createElement("option");
-  blank.value = "";
-  blank.textContent = "--";
-  selectEl.appendChild(blank);
-  for (let i = 0; i <= max; i++) {
-    const option = document.createElement("option");
-    option.value = String(i);
-    option.textContent = pad2(i);
-    selectEl.appendChild(option);
-  }
-}
-
-populateTimeSelect(hourPicker, 23);
-populateTimeSelect(minutePicker, 59);
-
-// 挑好日期/時/分後,把數字帶進下方手動欄位;實際送出仍然只看手動欄位的值
-datePicker.addEventListener("change", () => {
-  if (!datePicker.value) return;
-  const [y, m, d] = datePicker.value.split("-");
-  fieldYear.value = Number(y);
-  fieldMonth.value = Number(m);
-  fieldDay.value = Number(d);
-});
-
-hourPicker.addEventListener("change", () => {
-  if (hourPicker.value === "") return;
-  fieldHour.value = Number(hourPicker.value);
-});
-
-minutePicker.addEventListener("change", () => {
-  if (minutePicker.value === "") return;
-  fieldMinute.value = Number(minutePicker.value);
-});
-
-function daysInMonth(year, month) {
-  return new Date(year, month, 0).getDate();
-}
-
-function readManualDatetime() {
-  return {
-    year: fieldYear.value.trim(),
-    month: fieldMonth.value.trim(),
-    day: fieldDay.value.trim(),
-    hour: fieldHour.value.trim(),
-    minute: fieldMinute.value.trim(),
-  };
-}
-
-function validateDatetime(raw) {
-  if (!raw.year || !raw.month || !raw.day || !raw.hour || !raw.minute) {
-    return { ok: false, error: "缺少日期時間參數" };
-  }
-
-  const year = Number(raw.year);
-  const month = Number(raw.month);
-  const day = Number(raw.day);
-  const hour = Number(raw.hour);
-  const minute = Number(raw.minute);
-
-  const isValid =
-    Number.isInteger(year) && year >= 1970 && year <= 9999 &&
-    Number.isInteger(month) && month >= 1 && month <= 12 &&
-    Number.isInteger(day) && day >= 1 && day <= daysInMonth(year, month) &&
-    Number.isInteger(hour) && hour >= 0 && hour <= 23 &&
-    Number.isInteger(minute) && minute >= 0 && minute <= 59;
-
-  if (!isValid) {
-    return { ok: false, error: "日期時間格式錯誤" };
-  }
-
-  return { ok: true, value: { year, month, day, hour, minute } };
-}
-
-function toDatetimeParam(dt) {
-  return `${pad4(dt.year)}_${pad2(dt.month)}_${pad2(dt.day)}_${pad2(dt.hour)}_${pad2(dt.minute)}`;
-}
-
-function hideDialog() {
-  dialogOverlay.classList.remove("visible");
-}
-
-function showNotFoundDialog(dt, datetimeParam) {
-  dialogMessage.textContent =
-    `無法找到${dt.year}年${pad2(dt.month)}月${pad2(dt.day)}日${pad2(dt.hour)}:${pad2(dt.minute)}的遊戲紀錄，請問是否新建`;
-  dialogOverlay.classList.add("visible");
-
-  dialogYesBtn.onclick = () => {
-    hideDialog();
-    createRecord(datetimeParam);
-  };
-  dialogNoBtn.onclick = () => {
-    hideDialog();
-  };
-}
-
-async function fetchRecord(dt, datetimeParam) {
+// Demo 版本沒有日期時間選擇,永遠讀同一份固定的 FirelessWar_Demo 場次檔案。
+async function loadDemoRecord() {
   setLoading(true);
   try {
-    const res = await fetch(
-      `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}`,
-      { headers: authHeaders() }
-    );
+    const res = await fetch(`${API_BASE}/demo-record`, { headers: authHeaders() });
 
     if (res.status === 200) {
       const data = await res.json();
       await enterPage2(data.spreadsheet_id);
-    } else if (res.status === 404) {
-      showNotFoundDialog(dt, datetimeParam);
     } else if (res.status === 401) {
       showToast("未登入或此帳號未獲授權", "error");
     } else {
@@ -296,74 +176,35 @@ async function fetchRecord(dt, datetimeParam) {
   }
 }
 
-async function createRecord(datetimeParam) {
-  setLoading(true, "創建中…");
-  try {
-    const res = await fetch(
-      `${API_BASE}/record?datetime=${encodeURIComponent(datetimeParam)}`,
-      { method: "POST", headers: authHeaders() }
-    );
-
-    if (res.status === 201) {
-      showToast("創建成功", "success");
-    } else {
-      const data = await res.json().catch(() => ({}));
-      showToast(data.error || "建立時發生錯誤，請稍後再試", "error");
-    }
-  } catch (err) {
-    showToast("連線失敗，請確認網路連線或稍後再試", "error");
-  } finally {
-    setLoading(false);
-  }
-}
-
-btnReadRecord.addEventListener("click", () => {
-  const dtResult = validateDatetime(readManualDatetime());
-  if (!dtResult.ok) {
-    showToast(dtResult.error, "error");
-    return;
-  }
-
-  const datetimeParam = toDatetimeParam(dtResult.value);
-  fetchRecord(dtResult.value, datetimeParam);
-});
+btnReadRecord.addEventListener("click", loadDemoRecord);
 
 // ===== 頁面二 =====
 
+// Demo 版本財報捲軸只保留前兩個選項,其餘天數/最終結算都拿掉
 const ROUND_OPTIONS = [
   { label: "第一天財報", day: "1st", type: "Morning" },
   { label: "第一天預期", day: "1st", type: "Report" },
-  { label: "第二天財報", day: "2nd", type: "Morning" },
-  { label: "第二天預期", day: "2nd", type: "Report" },
-  { label: "第三天財報", day: "3rd", type: "Morning" },
-  { label: "第三天預期", day: "3rd", type: "Report" },
-  { label: "第四天財報", day: "4th", type: "Morning" },
-  { label: "第四天預期", day: "4th", type: "Report" },
-  { label: "第五天財報", day: "5th", type: "Morning" },
-  { label: "第五天預期", day: "5th", type: "Report" },
-  { label: "第六天財報", day: "6th", type: "Morning" },
-  { label: "第六天預期", day: "6th", type: "Report" },
-  { label: "第七天財報", day: "7th", type: "Morning" },
-  { label: "第七天預期", day: "7th", type: "Report" },
-  { label: "最終結算", day: "Final", type: "Report" },
 ];
 
 const BUSINESS_ORDER = ["general_business", "finance", "sex", "drug", "arms"];
 
+// Demo 版本刻意用中性的「事業1~5」取代真實事業類別名稱(闇金/色情/毒品等),
+// 不曝露遊戲本身的主題內容;oniwara_out 的相異標籤在 demo 裡沒有意義,
+// 兩組直接設成一樣,保留原本的分支結構但值相同,不用改動 renderPanel 的邏輯。
 const BUSINESS_LABELS_DEFAULT = {
-  general_business: "正當事業",
-  finance: "闇金",
-  sex: "色情",
-  drug: "毒品",
-  arms: "軍火",
+  general_business: "事業1",
+  finance: "事業2",
+  sex: "事業3",
+  drug: "事業4",
+  arms: "事業5",
 };
 
 const BUSINESS_LABELS_ONIWARA_OUT = {
-  general_business: "正當事業",
-  finance: "金融",
-  sex: "餐酒",
-  drug: "藥妝",
-  arms: "軍火",
+  general_business: "事業1",
+  finance: "事業2",
+  sex: "事業3",
+  drug: "事業4",
+  arms: "事業5",
 };
 
 const BUSINESS_COLORS_DEFAULT = {
@@ -483,21 +324,9 @@ scrollerEl.addEventListener("scroll", () => {
 scrollerPrevBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex - 1));
 scrollerNextBtn.addEventListener("click", () => setScrollerIndex(scrollerIndex + 1));
 
+// Demo 版本所有角色 icon 都用同一張圖(跟 favicon 共用),不區分角色/狀態
 function getIconPath(slug, mikeOut, kounoSingle) {
-  switch (slug) {
-    case "oniwara":
-      return "logo_icon/oniwara-logo.png";
-    case "mike":
-      return mikeOut ? "logo_icon/isao-logo.png" : "logo_icon/hyena-logo.png";
-    case "kinugawa":
-      return "logo_icon/yamoguchi-logo.png";
-    case "kouno":
-      return kounoSingle ? "logo_icon/kouno-logo.png" : "logo_icon/huntreak-logo.png";
-    case "ph003":
-      return "logo_icon/huntreak-logo.png";
-    default:
-      return null;
-  }
+  return "favicon.png";
 }
 
 function renderPanel(slug, entry, type, oniwaraOut, mikeOut, kounoSingle) {
