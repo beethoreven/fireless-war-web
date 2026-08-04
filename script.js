@@ -149,7 +149,7 @@ function showToast(message, type) {
   }, 2800);
 }
 
-function setLoading(isLoading, loadingText = "讀取中…") {
+function setLoading(isLoading, loadingText = "讀取中......<br>Loading......") {
   btnReadRecord.disabled = isLoading || !currentAuthorized;
   btnReadRecord.innerHTML = isLoading ? loadingText : "讀取Demo版本檔案<br>Load demo file";
 }
