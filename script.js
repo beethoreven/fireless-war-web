@@ -68,29 +68,66 @@ function showSignedInUI(email) {
   accountLabelEl.textContent = email ? email.split("@")[0] : "帳號";
 }
 
+// 「暫時確認不了」跟「登入真的失效」必須分開處理。
+//
+// 確認不了(網路斷線、後端還在冷啟動、後端連不上 Google 拿公鑰而回 503)時
+// 絕對不能清掉 currentIdToken:一旦清掉,下面那個 45 分鐘靜默續期的
+// setInterval 因為 `if (currentIdToken)` 這個條件會永遠不再執行,而進到第二頁
+// 之後登入列是隱藏的,使用者連重新登入的按鈕都看不到,只剩「自己重新整理」
+// 一條路。所以這裡保留 token,並自動退避重試,讓它有機會自己恢復。
+const AUTH_RETRY_BASE_MS = 5000;
+const AUTH_RETRY_MAX_MS = 60000;
+let authRetryTimer = null;
+let authRetryDelayMs = AUTH_RETRY_BASE_MS;
+
+function scheduleAuthRetry() {
+  clearTimeout(authRetryTimer);
+  // 只在連續失敗的「第一次」跳提示——每次重試都跳一個 toast 會洗版
+  if (authRetryDelayMs === AUTH_RETRY_BASE_MS) {
+    showToast("目前無法確認登入狀態，將自動重試", "error");
+  }
+  authRetryTimer = setTimeout(checkAuthStatus, authRetryDelayMs);
+  authRetryDelayMs = Math.min(authRetryDelayMs * 2, AUTH_RETRY_MAX_MS);
+}
+
 async function checkAuthStatus() {
   if (!currentIdToken) return;
+  clearTimeout(authRetryTimer);
+
+  let res;
   try {
-    const res = await fetch(`${API_BASE}/auth/status`, { headers: authHeaders() });
-    const data = await res.json().catch(() => ({}));
-    if (res.status === 200) {
-      currentAuthorized = !!data.authorized;
-      showSignedInUI(data.email);
-      if (!currentAuthorized) {
-        showToast("此帳號尚未獲得授權", "error");
-      }
-    } else {
-      // token 過期或無效,視同沒登入,回到登入前的狀態
-      showSignedOutUI();
-      showToast("登入已過期，請重新登入", "error");
-    }
+    res = await fetch(`${API_BASE}/auth/status`, { headers: authHeaders() });
   } catch (err) {
-    // 網路層級的失敗(例如連不上後端、CORS 被擋)——一併切回登出畫面,
-    // 不要讓帳號徽章停在「看起來還登入著」但按鈕被鎖住、沒有持續提示的不一致狀態。
-    // 如果只是暫時的網路問題,45 分鐘那個靜默重新登入或下次重新整理會自動救回來。
-    showSignedOutUI();
-    showToast("無法確認登入狀態，請檢查網路連線後重新整理", "error");
+    // 連線層級失敗:根本沒拿到後端的回應,無從判斷 token 有沒有效
+    currentAuthorized = false;
+    updateReadButtonLock();
+    scheduleAuthRetry();
+    return;
   }
+
+  if (res.status === 401) {
+    // 後端明確判定這個 token 無效/過期——只有這種情況才真的該登出
+    showSignedOutUI();
+    showToast("登入已過期，請重新登入", "error");
+    return;
+  }
+
+  if (!res.ok) {
+    // 其他非 2xx(含後端的 503「目前無法驗證登入狀態」):後端有回應,
+    // 但它自己也無法確認,同樣不能把使用者踢出登入狀態
+    currentAuthorized = false;
+    updateReadButtonLock();
+    scheduleAuthRetry();
+    return;
+  }
+
+  const data = await res.json().catch(() => ({}));
+  currentAuthorized = !!data.authorized;
+  showSignedInUI(data.email);
+  if (!currentAuthorized) {
+    showToast("此帳號尚未獲得授權", "error");
+  }
+  authRetryDelayMs = AUTH_RETRY_BASE_MS; // 成功確認一次就把退避時間重設
   updateReadButtonLock();
 }
 
@@ -697,7 +734,13 @@ async function enterPage2(spreadsheetId) {
 }
 
 btnStartGame.addEventListener("click", () => {
-  enterPage3();
+  // enterPage3 一開頭要先 fadeOut 350ms,這段期間按鈕還看得到也還能按,
+  // 連點兩下就會送出兩次 /round(白白多吃一次速率限制額度)。先鎖住,
+  // 失敗退回這一頁時再解鎖,讓使用者可以重試。
+  btnStartGame.disabled = true;
+  enterPage3().finally(() => {
+    btnStartGame.disabled = false;
+  });
 });
 
 async function enterPage3() {
