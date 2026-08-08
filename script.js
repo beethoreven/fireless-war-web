@@ -73,7 +73,6 @@ async function checkAuthStatus() {
   try {
     const res = await fetch(`${API_BASE}/auth/status`, { headers: authHeaders() });
     const data = await res.json().catch(() => ({}));
-    console.log("[auth] /auth/status →", res.status, data);
     if (res.status === 200) {
       currentAuthorized = !!data.authorized;
       showSignedInUI(data.email);
@@ -86,10 +85,10 @@ async function checkAuthStatus() {
       showToast("登入已過期，請重新登入", "error");
     }
   } catch (err) {
-    // 網路層級的失敗(例如連不上後端、CORS 被擋)——之前這裡完全沒有
-    // 任何提示,使用者只會看到功能莫名其妙用不了,不知道發生了什麼事
-    console.error("[auth] checkAuthStatus 發生例外:", err);
-    currentAuthorized = false;
+    // 網路層級的失敗(例如連不上後端、CORS 被擋)——一併切回登出畫面,
+    // 不要讓帳號徽章停在「看起來還登入著」但按鈕被鎖住、沒有持續提示的不一致狀態。
+    // 如果只是暫時的網路問題,45 分鐘那個靜默重新登入或下次重新整理會自動救回來。
+    showSignedOutUI();
     showToast("無法確認登入狀態，請檢查網路連線後重新整理", "error");
   }
   updateReadButtonLock();
@@ -500,8 +499,6 @@ function getIconPath(slug, mikeOut, kounoSingle) {
       return kounoSingle ? "logo_icon/kouno-logo.png" : "logo_icon/huntreak-logo.png";
     case "ph003":
       return "logo_icon/huntreak-logo.png";
-    default:
-      return null;
   }
 }
 
