@@ -391,10 +391,10 @@ function renderPanel(slug, entry, type, oniwaraOut) {
 
 function evaluateWarning(legal, illegal, brokenTarget) {
   if (illegal > legal + brokenTarget) {
-    return { level: "severe", text: "⚠ City Economy Collapsing" };
+    return { level: "severe", text: "⚠ Situation 2" };
   }
   if (illegal > legal) {
-    return { level: "moderate", text: "⚠ Business Structure Collapsing" };
+    return { level: "moderate", text: "⚠ Situation 1" };
   }
   return null;
 }
