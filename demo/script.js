@@ -6,16 +6,16 @@
 //   - 打 /demo-record、/demo-round 而不是 /record、/round——複製的是
 //     FirelessWar_Demo 而不是正式版 Template,角色對照表也換成通用的
 //     Character A~E(由後端的 DEMO_CHARACTER_SLUGS 決定,前端不用知道這件事)。
-//   - 不用正式版那套 auto_select/靜默登入——這是公開示範頁,每次都讓訪客
-//     自己主動選帳號,不要在背景幫不知情的訪客悄悄建立一份 demo 副本;
-//     也因此不需要正式版那套「暫時驗不了 vs. 真的沒授權」的 503/401 重試
-//     機制,也不需要打 /auth/status 確認授權——demo 不檢查白名單,登入
-//     成功本身就等於授權成功。
-//   - 圖表面板不設圖示,不使用正式版角色專屬的美術素材。
+//   - 不打 /auth/status(它回的是白名單授權結果),也就沒有正式版那套
+//     「暫時驗不了 vs. 真的沒授權」的重試機制——demo 不檢查白名單,
+//     拿到 Google ID Token 就等於授權成功。
+//   - 圖表面板不設圖示,不使用正式版角色專屬的美術素材;組織變化只靠
+//     Sheet 裡的組織名稱呈現(使用者決定)。
+//   - 429 有自己的英文提示:後端全站共用的 429 handler 回的是中文訊息。
 //
-// 其餘(日期時間選取/查詢/建立場次、圖表渲染、合法/非法事業計算、風頭事業
-// 顯示、回合切換 UI)都是直接照抄正式版的邏輯,避免這份 demo 跟正式版的
-// 操作流程、呈現方式不一致。
+// 其餘(靜默登入與 45 分鐘續期、日期時間選取/查詢/建立場次、圖表渲染、
+// 合法/非法事業計算、風頭事業顯示、回合切換 UI)都照抄正式版的邏輯,
+// 只把文字換成英文。改這份檔案前先跟 ../script.js 對照,不要自己簡化。
 
 const API_BASE = "https://fireless-war-backend.onrender.com";
 
@@ -58,6 +58,7 @@ function showToast(message, type) {
 
 const GOOGLE_CLIENT_ID = "665970888301-g3mjmlrba8aosq5j8jlkgqbukmp3u76p.apps.googleusercontent.com";
 
+const topBarEl = document.getElementById("top-bar");
 const demoBannerEl = document.getElementById("demo-banner");
 const googleSigninBtnEl = document.getElementById("google-signin-button");
 const accountSlotEl = document.getElementById("account-slot");
@@ -113,13 +114,21 @@ function handleCredentialResponse(response) {
   updateReadButtonLock();
 }
 
+function logPromptNotification(notification) {
+  if (notification.isNotDisplayed()) {
+    console.warn("[GIS] silent sign-in not displayed:", notification.getNotDisplayedReason());
+  } else if (notification.isSkippedMoment()) {
+    console.warn("[GIS] silent sign-in skipped:", notification.getSkippedReason());
+  } else if (notification.isDismissedMoment()) {
+    console.warn("[GIS] silent sign-in dismissed:", notification.getDismissedReason());
+  }
+}
+
 function initGoogleSignIn() {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleCredentialResponse,
-    // Demo 刻意不用 auto_select/靜默登入——這是公開示範頁,每次都讓訪客自己
-    // 主動選帳號,不要在背景幫不知情的訪客悄悄建立一份 demo 副本。
-    auto_select: false,
+    auto_select: true,
   });
   google.accounts.id.renderButton(googleSigninBtnEl, {
     theme: "filled_black",
@@ -127,9 +136,17 @@ function initGoogleSignIn() {
     shape: "pill",
     text: "signin",
   });
+  google.accounts.id.prompt(logPromptNotification);
 }
 
 initGoogleSignIn();
+
+// ID Token 大約 1 小時過期,跟正式版一樣每 45 分鐘靜默續期一次。
+setInterval(() => {
+  if (currentIdToken) {
+    google.accounts.id.prompt(logPromptNotification);
+  }
+}, 45 * 60 * 1000);
 
 accountSlotEl.addEventListener("click", () => {
   accountDropdownEl.hidden = !accountDropdownEl.hidden;
@@ -294,13 +311,7 @@ async function createDemoRecord(datetimeParam) {
     );
 
     if (res.status === 201) {
-      const data = await res.json();
-      if (data.warning) {
-        showToast(data.warning, "error");
-      }
-      await enterPage2(data.spreadsheet_id);
-    } else if (res.status === 401) {
-      showToast("Sign-in failed or expired, please try again", "error");
+      showToast("Created successfully", "success");
     } else if (res.status === 429) {
       showToast("This demo is getting a lot of traffic right now — please try again in a bit", "error");
     } else {
@@ -348,9 +359,9 @@ const BUSINESS_LABELS_DEFAULT = {
 
 const BUSINESS_LABELS_ONIWARA_OUT = {
   general_business: "Business 1",
-  finance: "Business 2",
-  sex: "Business 3",
-  drug: "Business 4",
+  finance: "New Business 2",
+  sex: "New Business 3",
+  drug: "New Business 4",
   arms: "Business 5",
 };
 
@@ -650,7 +661,8 @@ async function enterPage2(spreadsheetId) {
   currentSpreadsheetId = spreadsheetId;
 
   await fadeOut(page1El);
-  demoBannerEl.hidden = true; // 進第二頁之後版面吃緊,說明文字只在首頁出現
+  topBarEl.hidden = true; // 帳號/登入按鈕只在首頁出現
+  demoBannerEl.hidden = true;
   page2El.hidden = false;
   fadeIn(page2El);
 }
