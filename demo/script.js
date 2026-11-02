@@ -156,11 +156,11 @@ function parseEmailFromToken(token) {
 
 // Demo 試算表只有 1stDayMorning / 1stDayReport 兩個分頁(其餘天數的分頁
 // 沒建),所以這裡刻意只留這兩個選項——留著 Day2~Day7/Final 只會讓訪客
-// 點到真的讀不到資料的回合。標籤故意縮短成 "D1 M"/"D1 R",避免英文字串
-// 比中文版長,在輪盤式選單裡擠在一起重疊。
+// 點到真的讀不到資料的回合。標籤故意縮短,避免英文字串比中文版長,
+// 在輪盤式選單裡擠在一起重疊。
 const ROUND_OPTIONS = [
-  { label: "D1 M", day: "1st", type: "Morning" },
-  { label: "D1 R", day: "1st", type: "Report" },
+  { label: "D1 R", day: "1st", type: "Morning" },
+  { label: "D1 E", day: "1st", type: "Report" },
 ];
 
 const BUSINESS_ORDER = ["general_business", "finance", "sex", "drug", "arms"];
