@@ -8,8 +8,8 @@
   --accent-gold-hover: #e5c860;
   --error-red: #ff8a80;
   --success-green: #9be89b;
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
+  --font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'PingFang TC',
+    'Microsoft JhengHei', 'Heiti TC', sans-serif;
 }
 
 * {
@@ -698,5 +698,4 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 0.9rem;
   line-height: 1.6;
   text-align: center;
-}
 }
