@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fireless War 2 — Demo</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" integrity="sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y" crossorigin="anonymous"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body>
+
+<div class="demo-banner" id="demo-banner">
+  Public demo — sign in with any Google account to get your own private copy of the sample data. Not affiliated with the production game.
+</div>
+
+<header class="top-bar" id="top-bar">
+  <div id="google-signin-button" class="google-signin-btn"></div>
+  <div class="account-slot" id="account-slot" hidden>
+    <span class="account-slot__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+      </svg>
+    </span>
+    <span class="account-slot__label" id="account-label">Account</span>
+    <div class="account-dropdown" id="account-dropdown" hidden>
+      <button type="button" class="account-dropdown__item" id="btn-sign-out">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<main class="page1">
+  <div class="panel">
+    <h1 class="title">Fireless War 2</h1>
+    <p class="demo-intro-text">
+      Sign in with any Google account below. This creates a fresh, private copy of the
+      sample game data for you alone to explore — no whitelist, no setup.
+    </p>
+  </div>
+</main>
+
+<main class="page2" id="page2" hidden>
+  <div class="page-intro">
+    <p class="page-intro__line">Seven Days of</p>
+    <p class="page-intro__line">Fireless War</p>
+    <button id="btn-start-game" class="btn-primary page-intro__btn">Begin!</button>
+  </div>
+</main>
+
+<main class="page3" id="page3" hidden>
+  <div class="chart-grid">
+    <section class="chart-panel" data-slug="oniwara" style="grid-area: oniwara;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="chart-panel" data-slug="mike" style="grid-area: mike;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="common-data-panel" style="grid-area: common;">
+      <div class="common-data-panel__row">
+        <span class="common-data-panel__label">Legal Business</span>
+        <span class="common-data-panel__value" id="legal-business-value">-</span>
+      </div>
+      <div class="common-data-panel__row">
+        <span class="common-data-panel__label">Illegal Business</span>
+        <span class="common-data-panel__value" id="illegal-business-value">-</span>
+      </div>
+      <div class="common-data-panel__row" id="hot-business-row" hidden>
+        <span class="common-data-panel__label">Hot Business</span>
+        <span class="common-data-panel__value" id="hot-business-value">-</span>
+      </div>
+      <div class="warning-banner" id="warning-banner" hidden></div>
+    </section>
+
+    <section class="chart-panel" data-slug="kinugawa" style="grid-area: kinugawa;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="chart-panel" data-slug="kouno" style="grid-area: kouno;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+
+    <section class="chart-panel" data-slug="ph003" style="grid-area: ph003;">
+      <div class="chart-panel__header">
+        <span class="chart-panel__icon" aria-hidden="true"></span>
+        <span class="chart-panel__org-name">-</span>
+      </div>
+      <div class="chart-panel__canvas-wrap"><canvas></canvas></div>
+      <div class="chart-panel__numbers">
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+        <div class="chart-panel__number"><span class="chart-panel__number-label"></span><span class="chart-panel__number-value"></span></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="loading-overlay" id="loading-overlay" hidden>
+  <div class="loading-spinner" aria-hidden="true"></div>
+</div>
+
+<footer class="switch-zone" id="switch-zone" hidden>
+  <span class="switch-zone__current-label" id="round-label-display"></span>
+  <div class="switch-zone__wheel-wrap">
+    <button class="switch-zone__wheel-arrow" id="scroller-prev" aria-label="Previous">&#8249;</button>
+    <div class="switch-zone__wheel-window">
+      <div class="switch-zone__wheel" id="scroller"></div>
+      <div class="switch-zone__wheel-highlight" aria-hidden="true"></div>
+    </div>
+    <button class="switch-zone__wheel-arrow" id="scroller-next" aria-label="Next">&#8250;</button>
+  </div>
+  <button class="switch-zone__read-btn" id="btn-round-read">Load</button>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
