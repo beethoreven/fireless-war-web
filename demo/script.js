@@ -175,19 +175,19 @@ const ROUND_OPTIONS = [
 const BUSINESS_ORDER = ["general_business", "finance", "sex", "drug", "arms"];
 
 const BUSINESS_LABELS_DEFAULT = {
-  general_business: "Legitimate Business",
-  finance: "Loansharking",
-  sex: "Vice",
-  drug: "Narcotics",
-  arms: "Arms Dealing",
+  general_business: "Business 1",
+  finance: "Business 2",
+  sex: "Business 3",
+  drug: "Business 4",
+  arms: "Business 5",
 };
 
 const BUSINESS_LABELS_ONIWARA_OUT = {
-  general_business: "Legitimate Business",
-  finance: "Finance",
-  sex: "Dining",
-  drug: "Cosmetics",
-  arms: "Arms Dealing",
+  general_business: "Business 1",
+  finance: "Business 2",
+  sex: "Business 3",
+  drug: "Business 4",
+  arms: "Business 5",
 };
 
 const BUSINESS_COLORS_DEFAULT = {
