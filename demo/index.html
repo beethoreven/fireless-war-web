@@ -44,9 +44,19 @@
     </p>
 
     <section class="field-group">
-      <label class="field-label" for="date-picker">Pick a date/time</label>
+      <label class="field-label" for="date-trigger">Pick a date/time</label>
       <div class="picker-row">
-        <input type="date" id="date-picker" class="date-picker">
+        <div class="cal-wrap date-picker" id="date-picker">
+          <button type="button" id="date-trigger" class="cal-trigger is-empty" aria-haspopup="dialog" aria-expanded="false">YYYY/MM/DD</button>
+          <div class="cal" id="cal-panel" role="dialog" aria-label="Pick a date" hidden>
+            <div class="cal__head">
+              <button type="button" class="cal__nav" id="cal-prev" aria-label="Previous month">‹</button>
+              <div class="cal__title" id="cal-title" aria-live="polite"></div>
+              <button type="button" class="cal__nav" id="cal-next" aria-label="Next month">›</button>
+            </div>
+            <div class="cal__grid" id="cal-grid"></div>
+          </div>
+        </div>
         <select id="hour-picker" class="time-select" aria-label="Hour"></select>
         <span class="dt-unit">h</span>
         <select id="minute-picker" class="time-select" aria-label="Minute"></select>

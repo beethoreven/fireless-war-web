@@ -36,9 +36,19 @@
     <h1 class="title">場次讀取</h1>
 
     <section class="field-group">
-      <label class="field-label" for="date-picker">選擇日期時間</label>
+      <label class="field-label" for="date-trigger">選擇日期時間</label>
       <div class="picker-row">
-        <input type="date" id="date-picker" class="date-picker">
+        <div class="cal-wrap date-picker" id="date-picker">
+          <button type="button" id="date-trigger" class="cal-trigger is-empty" aria-haspopup="dialog" aria-expanded="false">年/月/日</button>
+          <div class="cal" id="cal-panel" role="dialog" aria-label="選擇日期" hidden>
+            <div class="cal__head">
+              <button type="button" class="cal__nav" id="cal-prev" aria-label="上個月">‹</button>
+              <div class="cal__title" id="cal-title" aria-live="polite"></div>
+              <button type="button" class="cal__nav" id="cal-next" aria-label="下個月">›</button>
+            </div>
+            <div class="cal__grid" id="cal-grid"></div>
+          </div>
+        </div>
         <select id="hour-picker" class="time-select" aria-label="時"></select>
         <span class="dt-unit">時</span>
         <select id="minute-picker" class="time-select" aria-label="分"></select>

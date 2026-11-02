@@ -231,14 +231,114 @@ function populateTimeSelect(selectEl, max) {
 populateTimeSelect(hourPicker, 23);
 populateTimeSelect(minutePicker, 59);
 
+// ===== 日期選擇器:自己畫的月曆 =====
+// 原生 <input type="date"> 跳出來的月曆是 Chrome 自己畫的,在 Windows 上中文字
+// 會壞掉,網頁的字體、深色、語言設定都碰不到它(2026-11-02 在 Windows 上逐一
+// 試過,全部一樣壞)。寫法參照 boo-king-king 的 js/calendar.js;這裡每一天都
+// 可以選,所以沒有它那套「開放日期」的載入。
+const CAL_WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+const CAL_PLACEHOLDER = "年/月/日";
+const calTitleText = (year, month) => `${year} 年 ${month} 月`;
+
+const dateTrigger = document.getElementById("date-trigger");
+const calPanel = document.getElementById("cal-panel");
+const calTitle = document.getElementById("cal-title");
+const calGrid = document.getElementById("cal-grid");
+
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth() + 1; // 1-12
+let calSelected = null; // { year, month, day }
+
+function renderCalendar() {
+  calTitle.textContent = calTitleText(calYear, calMonth);
+  calGrid.replaceChildren();
+
+  for (const w of CAL_WEEKDAYS) {
+    const dow = document.createElement("div");
+    dow.className = "cal__dow";
+    dow.textContent = w;
+    calGrid.appendChild(dow);
+  }
+
+  // 前面補空格到 1 號的星期。Date 只拿來算星期與天數,年月日都是本地字面值。
+  const lead = new Date(calYear, calMonth - 1, 1).getDay();
+  for (let i = 0; i < lead; i++) {
+    const padCell = document.createElement("div");
+    padCell.className = "cal__pad";
+    calGrid.appendChild(padCell);
+  }
+
+  const now = new Date();
+  for (let d = 1; d <= daysInMonth(calYear, calMonth); d++) {
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "cal__day";
+    cell.textContent = String(d);
+    if (calSelected && calSelected.year === calYear && calSelected.month === calMonth && calSelected.day === d) {
+      cell.classList.add("is-selected");
+    }
+    if (now.getFullYear() === calYear && now.getMonth() + 1 === calMonth && now.getDate() === d) {
+      cell.classList.add("is-today");
+    }
+    cell.addEventListener("click", () => pickDate(calYear, calMonth, d));
+    calGrid.appendChild(cell);
+  }
+}
+
 // 挑好日期/時/分後,把數字帶進下方手動欄位;實際送出仍然只看手動欄位的值
-datePicker.addEventListener("change", () => {
-  if (!datePicker.value) return;
-  const [y, m, d] = datePicker.value.split("-");
-  fieldYear.value = Number(y);
-  fieldMonth.value = Number(m);
-  fieldDay.value = Number(d);
-});
+function pickDate(year, month, day) {
+  calSelected = { year, month, day };
+  dateTrigger.textContent = `${pad4(year)}/${pad2(month)}/${pad2(day)}`;
+  dateTrigger.classList.remove("is-empty");
+  fieldYear.value = year;
+  fieldMonth.value = month;
+  fieldDay.value = day;
+  closeCalendar();
+}
+
+function shiftCalendarMonth(delta) {
+  calMonth += delta;
+  if (calMonth < 1) { calMonth = 12; calYear -= 1; }
+  if (calMonth > 12) { calMonth = 1; calYear += 1; }
+  renderCalendar();
+}
+
+function openCalendar() {
+  // 打開時回到選過的那個月;沒選過就停在上次翻到的月份
+  if (calSelected) {
+    calYear = calSelected.year;
+    calMonth = calSelected.month;
+  }
+  renderCalendar();
+  calPanel.hidden = false;
+  dateTrigger.setAttribute("aria-expanded", "true");
+  document.addEventListener("mousedown", onCalendarOutside);
+  document.addEventListener("keydown", onCalendarKey);
+}
+
+function closeCalendar() {
+  calPanel.hidden = true;
+  dateTrigger.setAttribute("aria-expanded", "false");
+  document.removeEventListener("mousedown", onCalendarOutside);
+  document.removeEventListener("keydown", onCalendarKey);
+}
+
+// 用 mousedown 而不是 click:按下去的那一刻面板就該收起來
+function onCalendarOutside(e) {
+  if (!datePicker.contains(e.target)) closeCalendar();
+}
+
+function onCalendarKey(e) {
+  if (e.key === "Escape") {
+    closeCalendar();
+    dateTrigger.focus();
+  }
+}
+
+dateTrigger.textContent = CAL_PLACEHOLDER;
+dateTrigger.addEventListener("click", () => (calPanel.hidden ? openCalendar() : closeCalendar()));
+document.getElementById("cal-prev").addEventListener("click", () => shiftCalendarMonth(-1));
+document.getElementById("cal-next").addEventListener("click", () => shiftCalendarMonth(1));
 
 hourPicker.addEventListener("change", () => {
   if (hourPicker.value === "") return;

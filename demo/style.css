@@ -175,7 +175,7 @@ select:focus {
 
 /* Windows 的 Chrome 會用 select 的半透明背景去畫展開的選單,疊在白底上變成
    淺底淺字;選項要給實心底色。Mac 的原生選單不吃這條,不受影響。 */
-/* 讓 Windows 上瀏覽器自己畫的元件(下拉選單、日曆彈窗)改用深色版本。
+/* 讓 Windows 上瀏覽器自己畫的元件(下拉選單)改用深色版本。
    只能加在表單元件上,不能加在 :root:整頁宣告成深色的話,
    Google 登入按鈕的 iframe(淺色)後面會被瀏覽器墊一塊白底。 */
 input, select {
@@ -197,6 +197,122 @@ select option {
 .date-picker {
   flex: 1;
   min-width: 0;
+}
+
+/* 自己畫的月曆(見 script.js「日期選擇器」那段)。觸發欄位的外觀跟上面的
+   input 一致,看起來還是同一個輸入框。 */
+.cal-wrap {
+  position: relative;
+}
+
+.cal-trigger {
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.cal-trigger:focus,
+.cal-trigger[aria-expanded="true"] {
+  border-color: var(--accent-gold);
+}
+
+.cal-trigger.is-empty {
+  color: var(--text-muted);
+}
+
+.cal {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 280px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 12px;
+  background: var(--bg-wine);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cal__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.cal__nav {
+  font-family: inherit;
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  line-height: 1;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.cal__nav:hover {
+  border-color: var(--accent-gold);
+}
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal__dow {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+}
+
+.cal__pad {
+  height: 38px;
+}
+
+.cal__day {
+  height: 38px;
+  font-family: inherit;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.cal__day:hover {
+  border-color: var(--accent-gold);
+}
+
+.cal__day.is-today {
+  border-color: var(--panel-border);
+}
+
+.cal__day.is-selected {
+  background: var(--accent-gold);
+  color: #2a0a17;
+  font-weight: 700;
 }
 
 .time-select {
