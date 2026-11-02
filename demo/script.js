@@ -1,17 +1,21 @@
 // ===== Demo 版本專用的前端。=====
 //
-// 跟正式版 (../script.js) 的差異:
-//   - 不需要 datetime 輸入/查詢既有場次,登入後直接打 POST /demo-session,
-//     後端每次都會建立一份全新的 FirelessWar_Demo 副本並把這個帳號加為編輯者。
-//   - 不檢查白名單,任何 Google 帳號都能用,所以也不需要正式版那套
-//     「暫時驗不了 vs. 真的沒授權」的 503/401 重試機制——demo 是一次性訪客,
-//     token 過期就請他們重新整理頁面即可,不值得為此多維護一套重試邏輯。
-//   - 呼叫 /demo-round 而不是 /round,角色對照表也換成通用的 Character A~E
-//     (由後端的 DEMO_CHARACTER_SLUGS 決定,前端完全不用知道這件事)。
-//   - 圖表圖示統一用同一張通用圖示,不使用正式版角色專屬的美術素材。
+// 跟正式版 (../script.js) 的差異,只有這些:
+//   - 不檢查白名單,任何登入的 Google 帳號都能查詢/建立/讀取場次,用
+//     require_valid_login 取代後端的 require_gm_email,其餘流程一樣。
+//   - 打 /demo-record、/demo-round 而不是 /record、/round——複製的是
+//     FirelessWar_Demo 而不是正式版 Template,角色對照表也換成通用的
+//     Character A~E(由後端的 DEMO_CHARACTER_SLUGS 決定,前端不用知道這件事)。
+//   - 不用正式版那套 auto_select/靜默登入——這是公開示範頁,每次都讓訪客
+//     自己主動選帳號,不要在背景幫不知情的訪客悄悄建立一份 demo 副本;
+//     也因此不需要正式版那套「暫時驗不了 vs. 真的沒授權」的 503/401 重試
+//     機制,也不需要打 /auth/status 確認授權——demo 不檢查白名單,登入
+//     成功本身就等於授權成功。
+//   - 圖表面板不設圖示,不使用正式版角色專屬的美術素材。
 //
-// 其餘(圖表渲染、合法/非法事業計算、風頭事業顯示、回合切換 UI)都是直接
-// 照抄正式版的邏輯,避免這份 demo 跟正式版的呈現方式不一致。
+// 其餘(日期時間選取/查詢/建立場次、圖表渲染、合法/非法事業計算、風頭事業
+// 顯示、回合切換 UI)都是直接照抄正式版的邏輯,避免這份 demo 跟正式版的
+// 操作流程、呈現方式不一致。
 
 const API_BASE = "https://fireless-war-backend.onrender.com";
 
@@ -23,7 +27,22 @@ function pingKeepAlive() {
 pingKeepAlive();
 setInterval(pingKeepAlive, 5 * 60 * 1000);
 
+const datePicker = document.getElementById("date-picker");
+const hourPicker = document.getElementById("hour-picker");
+const minutePicker = document.getElementById("minute-picker");
+const fieldYear = document.getElementById("field-year");
+const fieldMonth = document.getElementById("field-month");
+const fieldDay = document.getElementById("field-day");
+const fieldHour = document.getElementById("field-hour");
+const fieldMinute = document.getElementById("field-minute");
+const btnReadRecord = document.getElementById("btn-read-record");
+
 const toastEl = document.getElementById("toast");
+const dialogOverlay = document.getElementById("dialog-overlay");
+const dialogMessage = document.getElementById("dialog-message");
+const dialogYesBtn = document.getElementById("dialog-yes");
+const dialogNoBtn = document.getElementById("dialog-no");
+
 let toastTimer = null;
 
 function showToast(message, type) {
@@ -47,17 +66,23 @@ const accountDropdownEl = document.getElementById("account-dropdown");
 const btnSignOut = document.getElementById("btn-sign-out");
 
 let currentIdToken = null;
-let creatingSession = false;
+let currentAuthorized = false;
 
 function authHeaders() {
   return currentIdToken ? { Authorization: `Bearer ${currentIdToken}` } : {};
 }
 
+function updateReadButtonLock() {
+  btnReadRecord.disabled = !currentAuthorized;
+}
+
 function showSignedOutUI() {
   currentIdToken = null;
+  currentAuthorized = false;
   googleSigninBtnEl.hidden = false;
   accountSlotEl.hidden = true;
   accountDropdownEl.hidden = true;
+  updateReadButtonLock();
 }
 
 function showSignedInUI(email) {
@@ -66,9 +91,26 @@ function showSignedInUI(email) {
   accountLabelEl.textContent = email ? email.split("@")[0] : "Account";
 }
 
+// 只是為了「登入列要不要顯示帳號」這個顯示用途,解 Google ID Token 的 payload
+// (JWT 中段 base64url),不涉及任何驗證——真正的驗證永遠在後端做。
+function parseEmailFromToken(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload.email || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+// Demo 不檢查白名單,所以不像正式版那樣還要再打一支 /auth/status 確認
+// 「這個帳號有沒有被授權」——Google 登入成功、拿到 ID Token 就直接解鎖
+// 「讀取記錄表」按鈕即可,真正的驗證永遠在後端的 require_valid_login 做,
+// 前端這裡鎖不鎖只是體驗,不是安全邊界。
 function handleCredentialResponse(response) {
   currentIdToken = response.credential;
-  startDemoSession();
+  currentAuthorized = true;
+  showSignedInUI(parseEmailFromToken(currentIdToken));
+  updateReadButtonLock();
 }
 
 function initGoogleSignIn() {
@@ -104,53 +146,184 @@ btnSignOut.addEventListener("click", () => {
   showSignedOutUI();
 });
 
-async function startDemoSession() {
-  if (creatingSession) return;
-  creatingSession = true;
-  showLoading();
+// ===== 日期時間選取/查詢/建立場次(照抄正式版 script.js 的邏輯) =====
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function pad4(n) {
+  return String(n).padStart(4, "0");
+}
+
+function populateTimeSelect(selectEl, max) {
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = "--";
+  selectEl.appendChild(blank);
+  for (let i = 0; i <= max; i++) {
+    const option = document.createElement("option");
+    option.value = String(i);
+    option.textContent = pad2(i);
+    selectEl.appendChild(option);
+  }
+}
+
+populateTimeSelect(hourPicker, 23);
+populateTimeSelect(minutePicker, 59);
+
+// 挑好日期/時/分後,把數字帶進下方手動欄位;實際送出仍然只看手動欄位的值
+datePicker.addEventListener("change", () => {
+  if (!datePicker.value) return;
+  const [y, m, d] = datePicker.value.split("-");
+  fieldYear.value = Number(y);
+  fieldMonth.value = Number(m);
+  fieldDay.value = Number(d);
+});
+
+hourPicker.addEventListener("change", () => {
+  if (hourPicker.value === "") return;
+  fieldHour.value = Number(hourPicker.value);
+});
+
+minutePicker.addEventListener("change", () => {
+  if (minutePicker.value === "") return;
+  fieldMinute.value = Number(minutePicker.value);
+});
+
+function daysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function readManualDatetime() {
+  return {
+    year: fieldYear.value.trim(),
+    month: fieldMonth.value.trim(),
+    day: fieldDay.value.trim(),
+    hour: fieldHour.value.trim(),
+    minute: fieldMinute.value.trim(),
+  };
+}
+
+function validateDatetime(raw) {
+  if (!raw.year || !raw.month || !raw.day || !raw.hour || !raw.minute) {
+    return { ok: false, error: "Missing date/time fields" };
+  }
+
+  const year = Number(raw.year);
+  const month = Number(raw.month);
+  const day = Number(raw.day);
+  const hour = Number(raw.hour);
+  const minute = Number(raw.minute);
+
+  const isValid =
+    Number.isInteger(year) && year >= 1970 && year <= 9999 &&
+    Number.isInteger(month) && month >= 1 && month <= 12 &&
+    Number.isInteger(day) && day >= 1 && day <= daysInMonth(year, month) &&
+    Number.isInteger(hour) && hour >= 0 && hour <= 23 &&
+    Number.isInteger(minute) && minute >= 0 && minute <= 59;
+
+  if (!isValid) {
+    return { ok: false, error: "Invalid date/time" };
+  }
+
+  return { ok: true, value: { year, month, day, hour, minute } };
+}
+
+function toDatetimeParam(dt) {
+  return `${pad4(dt.year)}_${pad2(dt.month)}_${pad2(dt.day)}_${pad2(dt.hour)}_${pad2(dt.minute)}`;
+}
+
+function hideDialog() {
+  dialogOverlay.classList.remove("visible");
+}
+
+function showNotFoundDialog(dt, datetimeParam) {
+  dialogMessage.textContent =
+    `No demo session found for ${dt.year}-${pad2(dt.month)}-${pad2(dt.day)} ${pad2(dt.hour)}:${pad2(dt.minute)}. Create one?`;
+  dialogOverlay.classList.add("visible");
+
+  dialogYesBtn.onclick = () => {
+    hideDialog();
+    createDemoRecord(datetimeParam);
+  };
+  dialogNoBtn.onclick = () => {
+    hideDialog();
+  };
+}
+
+function setRecordLoading(isLoading, loadingText = "Loading…") {
+  btnReadRecord.disabled = isLoading || !currentAuthorized;
+  btnReadRecord.textContent = isLoading ? loadingText : "Load Record";
+}
+
+async function fetchDemoRecord(dt, datetimeParam) {
+  setRecordLoading(true);
   try {
-    const res = await fetch(`${API_BASE}/demo-session`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    const res = await fetch(
+      `${API_BASE}/demo-record?datetime=${encodeURIComponent(datetimeParam)}`,
+      { headers: authHeaders() }
+    );
+
+    if (res.status === 200) {
+      const data = await res.json();
+      await enterPage2(data.spreadsheet_id);
+    } else if (res.status === 404) {
+      showNotFoundDialog(dt, datetimeParam);
+    } else if (res.status === 401) {
+      showToast("Sign-in failed or expired, please try again", "error");
+    } else if (res.status === 429) {
+      showToast("This demo is getting a lot of traffic right now — please try again in a bit", "error");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || "Could not look up the record, please try again later", "error");
+    }
+  } catch (err) {
+    showToast("Connection failed — check your network and try again", "error");
+  } finally {
+    setRecordLoading(false);
+  }
+}
+
+async function createDemoRecord(datetimeParam) {
+  setRecordLoading(true, "Creating…");
+  try {
+    const res = await fetch(
+      `${API_BASE}/demo-record?datetime=${encodeURIComponent(datetimeParam)}`,
+      { method: "POST", headers: authHeaders() }
+    );
 
     if (res.status === 201) {
       const data = await res.json();
-      showSignedInUI(parseEmailFromToken(currentIdToken));
       if (data.warning) {
         showToast(data.warning, "error");
       }
       await enterPage2(data.spreadsheet_id);
     } else if (res.status === 401) {
-      showSignedOutUI();
       showToast("Sign-in failed or expired, please try again", "error");
     } else if (res.status === 429) {
-      showSignedOutUI();
       showToast("This demo is getting a lot of traffic right now — please try again in a bit", "error");
     } else {
-      showSignedOutUI();
       const data = await res.json().catch(() => ({}));
-      showToast(data.error || "Could not start the demo, please try again later", "error");
+      showToast(data.error || "Could not create the demo session, please try again later", "error");
     }
   } catch (err) {
-    showSignedOutUI();
     showToast("Connection failed — check your network and try again", "error");
   } finally {
-    hideLoading();
-    creatingSession = false;
+    setRecordLoading(false);
   }
 }
 
-// 只是為了「登入列要不要顯示帳號」這個顯示用途,解 Google ID Token 的 payload
-// (JWT 中段 base64url),不涉及任何驗證——真正的驗證永遠在後端做。
-function parseEmailFromToken(token) {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return payload.email || null;
-  } catch (err) {
-    return null;
+btnReadRecord.addEventListener("click", () => {
+  const dtResult = validateDatetime(readManualDatetime());
+  if (!dtResult.ok) {
+    showToast(dtResult.error, "error");
+    return;
   }
-}
+
+  const datetimeParam = toDatetimeParam(dtResult.value);
+  fetchDemoRecord(dtResult.value, datetimeParam);
+});
 
 // ===== 頁面二/三 =====
 

@@ -36,9 +36,38 @@
   <div class="panel">
     <h1 class="title">Fireless War</h1>
     <p class="demo-intro-text">
-      Sign in with any Google account below. This creates a fresh, private copy of the
-      sample game data for you alone to explore — no whitelist, no setup.
+      Sign in with any Google account below, then pick a date/time to load or create
+      your own private copy of the sample data — no whitelist, no setup.
     </p>
+
+    <section class="field-group">
+      <label class="field-label" for="date-picker">Pick a date/time</label>
+      <div class="picker-row">
+        <input type="date" id="date-picker" class="date-picker">
+        <select id="hour-picker" class="time-select" aria-label="Hour"></select>
+        <span class="dt-unit">h</span>
+        <select id="minute-picker" class="time-select" aria-label="Minute"></select>
+        <span class="dt-unit">m</span>
+      </div>
+    </section>
+
+    <section class="field-group manual-datetime">
+      <span class="field-label">Date/Time</span>
+      <div class="manual-datetime__row">
+        <input type="number" id="field-year" class="dt-input dt-input--year" placeholder="YYYY" min="1970" max="9999" inputmode="numeric">
+        <span class="dt-unit">Y</span>
+        <input type="number" id="field-month" class="dt-input dt-input--short" placeholder="MM" min="1" max="12" inputmode="numeric">
+        <span class="dt-unit">M</span>
+        <input type="number" id="field-day" class="dt-input dt-input--short" placeholder="DD" min="1" max="31" inputmode="numeric">
+        <span class="dt-unit">D</span>
+        <input type="number" id="field-hour" class="dt-input dt-input--short" placeholder="hh" min="0" max="23" inputmode="numeric">
+        <span class="dt-unit">h</span>
+        <input type="number" id="field-minute" class="dt-input dt-input--short" placeholder="mm" min="0" max="59" inputmode="numeric">
+        <span class="dt-unit">m</span>
+      </div>
+    </section>
+
+    <button id="btn-read-record" class="btn-primary" disabled>Load Record</button>
   </div>
 </main>
 
@@ -153,6 +182,16 @@
 </footer>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<div id="dialog-overlay" class="dialog-overlay">
+  <div class="dialog-box">
+    <p id="dialog-message" class="dialog-message"></p>
+    <div class="dialog-actions">
+      <button id="dialog-yes" class="btn-secondary">Yes</button>
+      <button id="dialog-no" class="btn-secondary">No</button>
+    </div>
+  </div>
+</div>
 
 <script src="script.js"></script>
 </body>
