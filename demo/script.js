@@ -154,22 +154,13 @@ function parseEmailFromToken(token) {
 
 // ===== 頁面二/三 =====
 
+// Demo 試算表只有 1stDayMorning / 1stDayReport 兩個分頁(其餘天數的分頁
+// 沒建),所以這裡刻意只留這兩個選項——留著 Day2~Day7/Final 只會讓訪客
+// 點到真的讀不到資料的回合。標籤故意縮短成 "D1 M"/"D1 R",避免英文字串
+// 比中文版長,在輪盤式選單裡擠在一起重疊。
 const ROUND_OPTIONS = [
-  { label: "Day 1 Morning", day: "1st", type: "Morning" },
-  { label: "Day 1 Report", day: "1st", type: "Report" },
-  { label: "Day 2 Morning", day: "2nd", type: "Morning" },
-  { label: "Day 2 Report", day: "2nd", type: "Report" },
-  { label: "Day 3 Morning", day: "3rd", type: "Morning" },
-  { label: "Day 3 Report", day: "3rd", type: "Report" },
-  { label: "Day 4 Morning", day: "4th", type: "Morning" },
-  { label: "Day 4 Report", day: "4th", type: "Report" },
-  { label: "Day 5 Morning", day: "5th", type: "Morning" },
-  { label: "Day 5 Report", day: "5th", type: "Report" },
-  { label: "Day 6 Morning", day: "6th", type: "Morning" },
-  { label: "Day 6 Report", day: "6th", type: "Report" },
-  { label: "Day 7 Morning", day: "7th", type: "Morning" },
-  { label: "Day 7 Report", day: "7th", type: "Report" },
-  { label: "Final Results", day: "Final", type: "Report" },
+  { label: "D1 M", day: "1st", type: "Morning" },
+  { label: "D1 R", day: "1st", type: "Report" },
 ];
 
 const BUSINESS_ORDER = ["general_business", "finance", "sex", "drug", "arms"];
