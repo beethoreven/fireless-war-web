@@ -10,8 +10,6 @@
   --success-green: #9be89b;
   --font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'PingFang TC',
     'Microsoft JhengHei', 'Heiti TC', sans-serif;
-  /* 讓 Windows 上瀏覽器自己畫的元件(下拉選單、日曆彈窗、捲軸)改用深色版本 */
-  color-scheme: dark;
 }
 
 * {
@@ -177,6 +175,13 @@ select:focus {
 
 /* Windows 的 Chrome 會用 select 的半透明背景去畫展開的選單,疊在白底上變成
    淺底淺字;選項要給實心底色。Mac 的原生選單不吃這條,不受影響。 */
+/* 讓 Windows 上瀏覽器自己畫的元件(下拉選單、日曆彈窗)改用深色版本。
+   只能加在表單元件上,不能加在 :root:整頁宣告成深色的話,
+   Google 登入按鈕的 iframe(淺色)後面會被瀏覽器墊一塊白底。 */
+input, select {
+  color-scheme: dark;
+}
+
 select option {
   background-color: var(--bg-wine);
   color: var(--text-primary);
