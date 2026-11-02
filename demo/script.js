@@ -542,9 +542,9 @@ function renderPanel(slug, entry, type, oniwaraOut) {
           { label: "Score", key: "current_integral", money: false },
         ]
       : [
-          { label: "Income Due", key: "expected_income", money: true },
-          { label: "Projected Money", key: "expected_money", money: true },
-          { label: "Projected Score", key: "expected_integral", money: false },
+          { label: "Income", key: "expected_income", money: true },
+          { label: "Expected Money", key: "expected_money", money: true },
+          { label: "Expected Score", key: "expected_integral", money: false },
         ];
 
   numberFields.forEach((field, idx) => {
