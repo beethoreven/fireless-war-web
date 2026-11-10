@@ -68,13 +68,23 @@ const btnSignOut = document.getElementById("btn-sign-out");
 
 let currentIdToken = null;
 let currentAuthorized = false;
+let recordRequestInFlight = false; // "Load Record" 的查詢/建立請求進行中
+let onHomePage = true; // 進到第二頁之後就是 false,不會再回到首頁
 
 function authHeaders() {
   return currentIdToken ? { Authorization: `Bearer ${currentIdToken}` } : {};
 }
 
+// 跟正式版一樣:請求進行中也要鎖,避免 45 分鐘續期剛好在讀取途中完成時
+// 把讀取中的按鈕提早解鎖。
 function updateReadButtonLock() {
-  btnReadRecord.disabled = !currentAuthorized;
+  btnReadRecord.disabled = recordRequestInFlight || !currentAuthorized;
+}
+
+// 跟正式版一樣:登入列平常只在首頁出現,第二、三頁只有真的登出時才顯示,
+// 讓 token 失效的使用者可以原地重新登入。
+function syncTopBar() {
+  topBarEl.hidden = !onHomePage && currentIdToken !== null;
 }
 
 function showSignedOutUI() {
@@ -84,6 +94,7 @@ function showSignedOutUI() {
   accountSlotEl.hidden = true;
   accountDropdownEl.hidden = true;
   updateReadButtonLock();
+  syncTopBar();
 }
 
 function showSignedInUI(email) {
@@ -112,6 +123,7 @@ function handleCredentialResponse(response) {
   currentAuthorized = true;
   showSignedInUI(parseEmailFromToken(currentIdToken));
   updateReadButtonLock();
+  syncTopBar(); // 在第二、三頁重新登入後,把登入列收回去
 }
 
 function logPromptNotification(notification) {
@@ -372,7 +384,8 @@ function showNotFoundDialog(dt, datetimeParam) {
 }
 
 function setRecordLoading(isLoading, loadingText = "Loading…") {
-  btnReadRecord.disabled = isLoading || !currentAuthorized;
+  recordRequestInFlight = isLoading;
+  updateReadButtonLock();
   btnReadRecord.textContent = isLoading ? loadingText : "Load Record";
 }
 
@@ -720,11 +733,21 @@ async function loadRound(day, type) {
     `${API_BASE}/demo-round?day=${encodeURIComponent(day)}&type=${encodeURIComponent(type)}` +
     `&spreadsheet_id=${encodeURIComponent(currentSpreadsheetId)}`;
 
+  const requestToken = currentIdToken;
   let res;
   try {
     res = await fetch(url, { headers: authHeaders() });
   } catch (err) {
     throw new Error("Connection failed — check your network and try again");
+  }
+
+  if (res.status === 401) {
+    // 跟正式版一樣:token 失效時在遊戲畫面上登出,登入列跟著出現;
+    // 等回應期間已換新 token 的話,這個 401 是舊 token 的,不要踢掉新登入。
+    if (currentIdToken === requestToken) {
+      showSignedOutUI();
+    }
+    throw new Error("Sign-in expired — sign in again (top right), then load");
   }
 
   if (!res.ok) {
@@ -763,7 +786,8 @@ async function enterPage2(spreadsheetId) {
   currentSpreadsheetId = spreadsheetId;
 
   await fadeOut(page1El);
-  topBarEl.hidden = true; // 帳號/登入按鈕只在首頁出現
+  onHomePage = false;
+  syncTopBar(); // 帳號/登入按鈕只在首頁出現(登出狀態例外,見 syncTopBar)
   demoBannerEl.hidden = true;
   page2El.hidden = false;
   fadeIn(page2El);

@@ -42,6 +42,8 @@ const btnSignOut = document.getElementById("btn-sign-out");
 
 let currentIdToken = null;
 let currentAuthorized = false;
+let recordRequestInFlight = false; // 「讀取記錄表」的查詢/建立請求進行中
+let onHomePage = true; // 進到第二頁之後就是 false,不會再回到首頁
 
 function authHeaders() {
   return currentIdToken ? { Authorization: `Bearer ${currentIdToken}` } : {};
@@ -50,16 +52,29 @@ function authHeaders() {
 function updateReadButtonLock() {
   // 這裡鎖住的是「按鈕看起來能不能按」,真正擋掉未授權存取的是後端每支 API
   // 自己驗證 token——就算有人用 devtools 把 disabled 拔掉,後端一樣會擋。
-  btnReadRecord.disabled = !currentAuthorized;
+  // 請求進行中也要鎖:登入確認(例如 45 分鐘續期)可能剛好在讀取途中完成,
+  // 只看 currentAuthorized 的話會把讀取中的按鈕提早解鎖,讓同一個請求送出兩次。
+  btnReadRecord.disabled = recordRequestInFlight || !currentAuthorized;
+}
+
+// 登入列平常只在首頁出現;第二、三頁只有在「真的登出了」(token 被清掉)時才顯示,
+// 不然 token 失效後使用者看不到重新登入的按鈕,只能自己重新整理。
+// 「暫時驗不了」不會清 token,所以不會讓登入列在遊戲畫面上閃出來。
+function syncTopBar() {
+  topBarEl.hidden = !onHomePage && currentIdToken !== null;
 }
 
 function showSignedOutUI() {
   currentIdToken = null;
   currentAuthorized = false;
+  // 登出時把重試排程收掉、退避時間歸零,下次登入是全新的一輪
+  clearTimeout(authRetryTimer);
+  authRetryDelayMs = AUTH_RETRY_BASE_MS;
   googleSigninBtnEl.hidden = false;
   accountSlotEl.hidden = true;
   accountDropdownEl.hidden = true;
   updateReadButtonLock();
+  syncTopBar();
 }
 
 function showSignedInUI(email) {
@@ -94,16 +109,25 @@ async function checkAuthStatus() {
   if (!currentIdToken) return;
   clearTimeout(authRetryTimer);
 
+  // 記下這次確認的是哪一個 token。等回應的期間,使用者可能按了登出,
+  // 或 45 分鐘續期換了新 token——回應回來時 token 已經不是同一個,
+  // 這個結果就過時了,直接丟掉,不然會把已登出的畫面改回「已登入」。
+  const checkedToken = currentIdToken;
+  const isStale = () => currentIdToken !== checkedToken;
+
   let res;
   try {
     res = await fetch(`${API_BASE}/auth/status`, { headers: authHeaders() });
   } catch (err) {
+    if (isStale()) return;
     // 連線層級失敗:根本沒拿到後端的回應,無從判斷 token 有沒有效
     currentAuthorized = false;
     updateReadButtonLock();
     scheduleAuthRetry();
     return;
   }
+
+  if (isStale()) return;
 
   if (res.status === 401) {
     // 後端明確判定這個 token 無效/過期——只有這種情況才真的該登出
@@ -122,6 +146,7 @@ async function checkAuthStatus() {
   }
 
   const data = await res.json().catch(() => ({}));
+  if (isStale()) return;
   currentAuthorized = !!data.authorized;
   showSignedInUI(data.email);
   if (!currentAuthorized) {
@@ -133,6 +158,7 @@ async function checkAuthStatus() {
 
 function handleCredentialResponse(response) {
   currentIdToken = response.credential;
+  syncTopBar(); // 在第二、三頁重新登入後,把登入列收回去
   checkAuthStatus();
 }
 
@@ -211,7 +237,8 @@ function showToast(message, type) {
 }
 
 function setLoading(isLoading, loadingText = "讀取中…") {
-  btnReadRecord.disabled = isLoading || !currentAuthorized;
+  recordRequestInFlight = isLoading;
+  updateReadButtonLock();
   btnReadRecord.textContent = isLoading ? loadingText : "讀取記錄表";
 }
 
@@ -780,6 +807,7 @@ async function loadRound(day, type) {
     `${API_BASE}/round?day=${encodeURIComponent(day)}&type=${encodeURIComponent(type)}` +
     `&spreadsheet_id=${encodeURIComponent(currentSpreadsheetId)}`;
 
+  const requestToken = currentIdToken;
   let res;
   try {
     res = await fetch(url, { headers: authHeaders() });
@@ -789,6 +817,16 @@ async function loadRound(day, type) {
     // 固定的中文訊息——呼叫端(enterPage3/btnRoundRead)是直接把 err.message 拿去
     // 顯示在 toast 上的,所以這裡丟出去的 Error 一定要保證訊息本身是中文。
     throw new Error("連線失敗,請確認網路連線或稍後再試");
+  }
+
+  if (res.status === 401) {
+    // token 失效(例如靜默續期沒成功、過了 1 小時),或帳號被移出白名單。
+    // 在遊戲畫面上登出,登入列會跟著出現,讓使用者可以原地重新登入。
+    // 等回應期間如果已經換了新 token,這個 401 是舊 token 的,不要把新登入踢掉。
+    if (currentIdToken === requestToken) {
+      showSignedOutUI();
+    }
+    throw new Error("登入已失效,請從右上角重新登入後再讀取");
   }
 
   if (!res.ok) {
@@ -828,7 +866,8 @@ async function enterPage2(spreadsheetId) {
   currentSpreadsheetId = spreadsheetId;
 
   await fadeOut(page1El);
-  topBarEl.hidden = true; // 帳號/登入按鈕只在首頁出現
+  onHomePage = false;
+  syncTopBar(); // 帳號/登入按鈕只在首頁出現(登出狀態例外,見 syncTopBar)
   page2El.hidden = false;
   fadeIn(page2El);
 }
