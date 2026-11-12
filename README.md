@@ -14,7 +14,7 @@
 
 ## English
 
-Frontend for *Fireless War 2*.
+Frontend for *Dreaming of a damp squib 2 - Fireless War*.
 
 Pairs with the backend API: [`fireless-war-backend`](https://github.com/beethoreven/fireless-war-backend)
 
