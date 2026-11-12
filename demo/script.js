@@ -2,7 +2,7 @@
 //
 // 跟正式版 (../script.js) 的差異,只有這些:
 //   - 不檢查白名單,任何登入的 Google 帳號都能查詢/建立/讀取場次,用
-//     require_valid_login 取代後端的 require_gm_email,其餘流程一樣。
+//     後端用 require_login 取代 require_gm,其餘流程一樣。
 //   - 打 /demo-record、/demo-round 而不是 /record、/round——複製的是
 //     FirelessWar_Demo 而不是正式版 Template,角色對照表也換成通用的
 //     Character A~E(由後端的 DEMO_CHARACTER_SLUGS 決定,前端不用知道這件事)。
@@ -10,19 +10,21 @@
 //     「暫時驗不了 vs. 真的沒授權」的重試機制——demo 不檢查白名單,
 //     拿到 Google ID Token 就等於授權成功。
 //   - 圖表面板不設圖示,不使用正式版角色專屬的美術素材;組織變化只靠
-//     Sheet 裡的組織名稱呈現(使用者決定)。
+//     Sheet 裡的組織名稱呈現。
 //   - 429 有自己的英文提示:後端全站共用的 429 handler 回的是中文訊息。
 //
 // 其餘(靜默登入與 45 分鐘續期、日期時間選取/查詢/建立場次、圖表渲染、
 // 合法/非法事業計算、風頭事業顯示、回合切換 UI)都照抄正式版的邏輯,
 // 只把文字換成英文。改這份檔案前先跟 ../script.js 對照,不要自己簡化。
 
-const API_BASE = "https://fireless-war-backend.onrender.com";
+const SERVICE_BASE = "https://router-backend-3hl2.onrender.com";
+const API_BASE = `${SERVICE_BASE}/fireless-war`;
 
 // 跟正式版一樣的 keep-alive 考量:demo 用的是同一個 Render 服務,
-// /status 是公開端點,打它不需要登入,純粹讓後端不要因為閒置而休眠。
+// /health 是公開端點,打它不需要登入,純粹讓後端不要因為閒置而休眠;
+// 不讀回應,所以用 no-cors(/health 不回 CORS 標頭)。
 function pingKeepAlive() {
-  fetch(`${API_BASE}/status`).catch(() => {});
+  fetch(`${SERVICE_BASE}/health`, { mode: "no-cors" }).catch(() => {});
 }
 pingKeepAlive();
 setInterval(pingKeepAlive, 5 * 60 * 1000);
@@ -116,7 +118,7 @@ function parseEmailFromToken(token) {
 
 // Demo 不檢查白名單,所以不像正式版那樣還要再打一支 /auth/status 確認
 // 「這個帳號有沒有被授權」——Google 登入成功、拿到 ID Token 就直接解鎖
-// 「讀取記錄表」按鈕即可,真正的驗證永遠在後端的 require_valid_login 做,
+// 「讀取記錄表」按鈕即可,真正的驗證永遠在後端的 require_login 做,
 // 前端這裡鎖不鎖只是體驗,不是安全邊界。
 function handleCredentialResponse(response) {
   currentIdToken = response.credential;
